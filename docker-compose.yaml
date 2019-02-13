@@ -31,7 +31,8 @@ services:
       POSTGRES_DB:       devbox
   app:
     build: ./
-    command: ["wait-for-it.sh", "devbox:8080", "--strict", "--timeout=0", "--", "adev", "runserver"]
+    command: ["adev", "runserver"]
+#    command: ["wait-for-it.sh", "devbox:8080", "--strict", "--timeout=0", "--", "adev", "runserver"]
     depends_on:
      - devbox
     links:

@@ -2,14 +2,14 @@ from os import getenv
 from pathlib import Path
 from aiohttp import web, ClientSession, BasicAuth
 from .settings import Settings
-from .views import index, init_aidbox
+from .views import index, init_aidbox, init
 
 THIS_DIR = Path(__file__).parent
 BASE_DIR = THIS_DIR.parent
 
 
 def setup_routes(app):
-    app.router.add_get('/', index, name='index')
+    app.router.add_get('/init', init, name='index')
     app.router.add_get('/{tail:.*}', index)
     app.router.add_post('/{tail:.*}', index)
 
@@ -19,7 +19,6 @@ async def on_startup(app):
         login=getenv('APP_INIT_CLIENT_ID'),
         password=getenv('APP_INIT_CLIENT_SECRET'))
     app['client'] = ClientSession(auth=basic_auth)
-    await init_aidbox(app)
 
 
 async def on_cleanup(app):
