@@ -25,7 +25,7 @@ MANIFEST = {
 
 
 async def manifest(request):
-    return web.json_response(MANIFEST)
+    return web.json_response({'manifest': MANIFEST})
 
 
 async def log_request(request):
@@ -59,13 +59,10 @@ async def init(request):
     return web.json_response({})
 
 
-async def T(request):
-    text = await request.text()
-    logger.info(type(text))
-    logger.info(text)
-    # json = loads(text)
-    # if 'type' in json and json['type'] in TYPES:
-    #     return await TYPES[json['type']](request)
+async def index(request):
+    json = await request.json()
+    if 'type' in json and json['type'] in TYPES:
+        return await TYPES[json['type']](request)
     req = {
         'method': request.method,
         'url': str(request.url),
