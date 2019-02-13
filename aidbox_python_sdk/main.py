@@ -2,7 +2,7 @@ from os import getenv
 from pathlib import Path
 from aiohttp import web, ClientSession, BasicAuth
 from .settings import Settings
-from .views import index, init_aidbox, init
+from .views import index, init_aidbox, init, log_request
 
 THIS_DIR = Path(__file__).parent
 BASE_DIR = THIS_DIR.parent
@@ -10,6 +10,7 @@ BASE_DIR = THIS_DIR.parent
 
 def setup_routes(app):
     app.router.add_get('/init', init, name='index')
+    app.router.add_get('/favicon.ico', log_request)
     app.router.add_get('/{tail:.*}', index)
     app.router.add_post('/{tail:.*}', index)
 
