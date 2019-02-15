@@ -18,7 +18,15 @@ class Settings:
 
     Or, passing the custom setting as a keyword argument when initialising settings (useful when testing)
     """
-    _ENV_PREFIX = 'APP_'
+    _ENV_PREFIX = ''
+
+    APP_INIT_CLIENT_ID = Required(v_type=str)
+    APP_INIT_CLIENT_SECRET = Required(v_type=str)
+    APP_INIT_URL = Required(v_type=str)
+    APP_ID = Required(v_type=str)
+    APP_URL = Required(v_type=str)
+    APP_PORT = Required(v_type=int)
+    APP_SECRET = Required(v_type=str)
 
     def __init__(self, **custom_settings):
         """
@@ -27,8 +35,8 @@ class Settings:
         self._custom_settings = custom_settings
         self.substitute_environ()
         for name, value in custom_settings.items():
-            if not hasattr(self, name):
-                raise TypeError('{} is not a valid setting name'.format(name))
+            # if not hasattr(self, name):
+            #     raise TypeError('{} is not a valid setting name'.format(name))
             setattr(self, name, value)
         setattr(self, 'static_path', None)
 
@@ -39,7 +47,6 @@ class Settings:
         for attr_name in dir(self):
             if attr_name.startswith('_') or attr_name.upper() != attr_name:
                 continue
-
             orig_value = getattr(self, attr_name)
             is_required = isinstance(orig_value, Required)
             orig_type = orig_value.v_type if is_required else type(orig_value)
@@ -60,4 +67,5 @@ class Settings:
                 raise RuntimeError('The required environment variable "{0}" is currently not set, '
                                    'you\'ll need to run `source activate.settings.sh` '
                                    'or you can set that single environment variable with '
-                                   '`export {0}="<value>"`'.format(env_var_name))
+                                   '`export {0}="<value>"` or pass variable in `custom_settings` '
+                                   'argument'.format(env_var_name))

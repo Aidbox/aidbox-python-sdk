@@ -1,31 +1,12 @@
 import logging
-from json import loads
-from os import getenv
 from aiohttp import web
 
-
 logger = logging.getLogger('aiohttp.access')
-
-MANIFEST = {
-    'id': getenv('APP_ID'),
-    'resourceType': 'App',
-    'type': 'app',
-    'apiVersion': 1,
-    'endpoint': {
-        'url': getenv('APP_URL'),
-        'type': 'http-rpc',
-        'secret': getenv('APP_SECRET'),
-    },
-    'subscriptions': {
-        'User': {
-            'handler': '/kek'
-        }
-    }
-}
+routes = web.RouteTableDef()
 
 
 async def manifest(request):
-    return web.json_response({'manifest': MANIFEST})
+    return web.json_response({'manifest': request.app['manifest']})
 
 
 async def log_request(request):
@@ -43,25 +24,29 @@ TYPES = {
 
 async def init_aidbox(app):
     json = {
-        'url': getenv('APP_URL'),
-        'secret': getenv('APP_INIT_CLIENT_SECRET'),
+        'url': app['settings'].APP_URL,
+        'secret': app['settings'].APP_INIT_CLIENT_SECRET,
     }
 
     async with app['client'].post(
-            '{}/App/$init'.format(getenv('APP_INIT_URL')),
+            '{}/App/$init'.format(app['settings'].APP_INIT_URL),
             json=json) as resp:
         logger.info(resp.status)
         logger.info(await resp.text())
 
 
+@routes.get('/init')
 async def init(request):
     await init_aidbox(request.app)
     return web.json_response({})
 
 
+@routes.post('/')
 async def index(request):
+    logger.info('New request {} {}'.format(request.method, request.url))
     json = await request.json()
     if 'type' in json and json['type'] in TYPES:
+        logger.info(json['type'])
         return await TYPES[json['type']](request)
     req = {
         'method': request.method,
