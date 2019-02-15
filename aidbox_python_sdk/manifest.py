@@ -5,6 +5,7 @@ class Manifest(object):
         self._subscriptions = {}
         self._subscription_handlers = {}
         self._operations = {}
+        self._operation_handlers = {}
         self._manifest = {
             'id': settings.APP_ID,
             'resourceType': 'App',
@@ -35,11 +36,18 @@ class Manifest(object):
     def get_subscription_handler(self, path):
         return self._subscription_handlers.get(path)
 
-    # def operation(method, path, entity):
-    #     def wrap(func):
-    #         self._operations.update(
-    #             {entity: {'handler': path}}
-    #         )
-    #         return routes.post(path)(func)
-    #
-    #     return wrap
+    def operation(self, method, path):
+        def wrap(func):
+            if not isinstance(path, list):
+                raise ValueError('`Path` must be a list')
+            operation_id = func.__name__
+            self._operations[operation_id] = {
+                'method': method,
+                'path': path,
+            }
+            self._operation_handlers[operation_id] = func
+            return func
+        return wrap
+
+    def get_operation_handler(self, operation_id):
+        return self._operation_handlers.get(operation_id)
