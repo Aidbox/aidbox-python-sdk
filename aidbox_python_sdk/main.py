@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from pathlib import Path
 from aiohttp import web, ClientSession, BasicAuth
@@ -50,6 +51,29 @@ async def create_app(settings, manifest, debug=False):
     return app
 
 
+async def start_site(runner):
+    print("======== Running on {} ========\n"
+          "(Press CTRL+C to quit)".format(runner.app['settings'].APP_PORT))
+    site = web.TCPSite(runner, 'localhost', runner.app['settings'].APP_PORT)
+    await site.start()
+    await init_aidbox(runner.app)
+
+
 def run_standalone_app(settings, manifest, debug=False):
+    loop = asyncio.get_event_loop()
     app = create_app(settings, manifest, debug=debug)
-    web.run_app(app, port=settings.APP_PORT)
+    if asyncio.iscoroutine(app):
+        app = loop.run_until_complete(app)
+    runner = web.AppRunner(app)
+    loop.run_until_complete(runner.setup())
+
+    try:
+        loop.run_until_complete(start_site(runner))
+        try:
+            loop.run_forever()
+        except (web.GracefulExit, KeyboardInterrupt):
+            pass
+    finally:
+        loop.run_until_complete(runner.cleanup())
+    loop.close()
+    # web.run_app(app, port=settings.APP_PORT)
