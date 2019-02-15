@@ -20,6 +20,7 @@ def main():
 """
 Test REST requests for subs and ops:
 POST /User
+POST /Contract
 POST /Patient
 
 POST /signup/register?param1=123&param2=foo
@@ -28,9 +29,10 @@ POST /User/$register
 """
 
 
+@manifest.subscription('Contract')
 @manifest.subscription('User')
-async def user_sub(event):
-    logging.debug('`User` subscription handler')
+async def user_and_contract_sub(event):
+    logging.debug('`User` and `Contract` subscription handler')
     logging.debug('Event: {}'.format(event))
     return web.json_response({})
 
