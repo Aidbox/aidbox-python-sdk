@@ -1,9 +1,9 @@
 class Manifest(object):
 
-    def __init__(self, routes, settings):
+    def __init__(self, settings):
         self._settings = settings
-        self._routes = routes
         self._subscriptions = {}
+        self._subscription_handlers = {}
         self._operations = {}
         self._manifest = {
             'id': settings.APP_ID,
@@ -24,13 +24,16 @@ class Manifest(object):
             self._manifest['operations'] = self._operations
         return self._manifest
 
-    def subscription(self, path, entity):
+    def subscription(self, entity):
         def wrap(func):
-            self._subscriptions.update(
-                {entity: {'handler': path}}
-            )
-            return self._routes.post(path)(func)
+            path = func.__name__
+            self._subscriptions[entity] = {'handler': path}
+            self._subscription_handlers[path] = func
+            return func
         return wrap
+
+    def get_subscription_handler(self, path):
+        return self._subscription_handlers.get(path)
 
     # def operation(method, path, entity):
     #     def wrap(func):
@@ -40,5 +43,3 @@ class Manifest(object):
     #         return routes.post(path)(func)
     #
     #     return wrap
-
-

@@ -1,13 +1,28 @@
+import logging
 from pathlib import Path
 from aiohttp import web, ClientSession, BasicAuth
 from .handlers import routes
 
+logger = logging.getLogger()
 THIS_DIR = Path(__file__).parent
 BASE_DIR = THIS_DIR.parent
 
 
 def setup_routes(app):
     app.add_routes(routes)
+
+
+async def init_aidbox(app):
+    json = {
+        'url': app['settings'].APP_URL,
+        'secret': app['settings'].APP_INIT_CLIENT_SECRET,
+    }
+
+    async with app['client'].post(
+            '{}/App/$init'.format(app['settings'].APP_INIT_URL),
+            json=json) as resp:
+        logger.info(resp.status)
+        logger.info(await resp.text())
 
 
 async def on_startup(app):
@@ -28,7 +43,8 @@ async def create_app(settings, manifest, debug=False):
     app.update(
         name='aidbox-python-sdk',
         settings=settings,
-        manifest=manifest
+        manifest=manifest,
+        init_aidbox_app=init_aidbox
     )
     setup_routes(app)
     return app
