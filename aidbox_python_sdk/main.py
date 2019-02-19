@@ -54,7 +54,7 @@ async def create_app(settings, manifest, debug=False):
 async def start_site(runner):
     print("======== Running on {} ========\n"
           "(Press CTRL+C to quit)".format(runner.app['settings'].APP_PORT))
-    site = web.TCPSite(runner, 'localhost', runner.app['settings'].APP_PORT)
+    site = web.TCPSite(runner, '0.0.0.0', runner.app['settings'].APP_PORT)
     await site.start()
     await init_aidbox(runner.app)
 
