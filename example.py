@@ -34,22 +34,18 @@ POST /User/$register
 async def user_and_contract_sub(event):
     logging.debug('`User` and `Contract` subscription handler')
     logging.debug('Event: {}'.format(event))
-    return web.json_response({})
-
 
 @manifest.subscription(entity='Patient')
 def patient_sub(event):
     logging.debug('`Patient` subscription handler')
     logging.debug('Event: {}'.format(event))
-    return web.json_response({})
 
-
-@manifest.operation(method='POST', path=['signup', 'register', {"name": "date"}])
+@manifest.operation(method='POST', path=['signup', 'register', {"name": "date"}, {"name": "test"}])
 def signup_register_op(operation, request):
     logging.debug('`signup_register_op` operation handler')
     logging.debug('Operation data: {}'.format(operation))
     logging.debug('Request: {}'.format(request))
-    return web.json_response({})
+    return web.json_response({"success": "Ok"})
 
 
 @manifest.operation(method='GET', path=['Patient', '$daily-report'])

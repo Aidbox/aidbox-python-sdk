@@ -23,7 +23,7 @@ async def subscription(request, data):
     result = handler(data['event'])
     if asyncio.iscoroutine(result):
         return await result
-    return result
+    return web.json_response({})
 
 
 async def operation(request, data):
