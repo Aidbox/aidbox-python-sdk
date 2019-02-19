@@ -1,3 +1,7 @@
+from fhirpy import FHIRClient
+from aiohttp import BasicAuth
+
+
 class Manifest(object):
 
     def __init__(self, settings):
@@ -17,6 +21,14 @@ class Manifest(object):
                 'secret': settings.APP_SECRET,
             }
         }
+
+
+    def init_client(self, config):
+        basic_auth = BasicAuth(
+            login=config['client']['id'],
+            password=config['client']['secret'])
+        self.client = FHIRClient('{}/fhir'.format(config['box']['base-url']),
+                                 authorization=basic_auth.encode())
 
     def build(self):
         if self._subscriptions:

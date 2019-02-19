@@ -42,13 +42,18 @@ async def operation(request, data):
 
 
 async def log_request(request, data):
-    logger.info('log_request')
+    logger.info('log_request {} {}'.format(request, data))
+    return web.json_response({})
+
+
+async def config(request, config):
+    request.app['manifest'].init_client(config)
     return web.json_response({})
 
 
 TYPES = {
     'manifest': manifest,
-    'config': log_request,
+    'config': config,
     'operation': operation,
     'subscription': subscription,
 }

@@ -3,3 +3,4 @@ aiohttp==3.4.4
 pytest-aiohttp==0.3.0
 pytest-cov==2.6.0
 pytest==4.0.1
+fhirpy==0.2.0
