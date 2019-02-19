@@ -34,6 +34,7 @@ async def wait_and_init_aidbox(app):
                 pass
             break
         except (client_exceptions.InvalidURL, client_exceptions.ClientConnectionError):
+            logger.debug('ECS:::::: ', e)
             await asyncio.sleep(2)
     await init_aidbox(app)
 
