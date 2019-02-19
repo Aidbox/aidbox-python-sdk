@@ -22,7 +22,7 @@ async def subscription(request, data):
         raise web.HTTPNotFound()
     result = handler(data['event'])
     if asyncio.iscoroutine(result):
-        return await result
+        await result
     return web.json_response({})
 
 
@@ -63,6 +63,7 @@ TYPES = {
 async def init(request):
     await request.app['init_aidbox_app'](request.app)
     return web.json_response({})
+
 
 
 @routes.post('/')

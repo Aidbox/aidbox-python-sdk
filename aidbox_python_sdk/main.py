@@ -1,7 +1,7 @@
-import asyncio
 import logging
+import asyncio
 from pathlib import Path
-from aiohttp import web, ClientSession, BasicAuth
+from aiohttp import web, ClientSession, BasicAuth, client_exceptions
 from .handlers import routes
 
 logger = logging.getLogger()
@@ -26,54 +26,46 @@ async def init_aidbox(app):
         logger.info(await resp.text())
 
 
+async def wait_and_init_aidbox(app):
+    while 1:
+        try:
+            address = 'http://{}:{}/'.format(app['settings'].AIO_HOST, app['settings'].AIO_PORT)
+            async with app['client'].get(address):
+                pass
+            break
+        except (client_exceptions.InvalidURL, client_exceptions.ClientConnectionError):
+            await asyncio.sleep(2)
+    await init_aidbox(app)
+
+
 async def on_startup(app):
     basic_auth = BasicAuth(
         login=app['settings'].APP_INIT_CLIENT_ID,
         password=app['settings'].APP_INIT_CLIENT_SECRET)
     app['client'] = ClientSession(auth=basic_auth)
+    asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
 
 
 async def on_cleanup(app):
     await app['client'].close()
 
 
+async def on_shutdown(app):
+    if not app['client'].closed:
+        await app['client'].close()
+
+
 async def create_app(settings, manifest, debug=False):
     app = web.Application(debug=debug)
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)
+    app.on_shutdown.append(on_shutdown)
     app.update(
         name='aidbox-python-sdk',
         settings=settings,
         manifest=manifest,
-        init_aidbox_app=init_aidbox
+        init_aidbox_app=init_aidbox,
+        livereload=True
     )
     setup_routes(app)
     return app
-
-
-async def start_site(runner):
-    print("======== Running on {} ========\n"
-          "(Press CTRL+C to quit)".format(runner.app['settings'].APP_PORT))
-    site = web.TCPSite(runner, '0.0.0.0', runner.app['settings'].APP_PORT)
-    await site.start()
-    await init_aidbox(runner.app)
-
-
-def run_standalone_app(settings, manifest, debug=False):
-    loop = asyncio.get_event_loop()
-    app = create_app(settings, manifest, debug=debug)
-    if asyncio.iscoroutine(app):
-        app = loop.run_until_complete(app)
-    runner = web.AppRunner(app)
-    loop.run_until_complete(runner.setup())
-
-    try:
-        loop.run_until_complete(start_site(runner))
-        try:
-            loop.run_forever()
-        except (web.GracefulExit, KeyboardInterrupt):
-            pass
-    finally:
-        loop.run_until_complete(runner.cleanup())
-    loop.close()
-    # web.run_app(app, port=settings.APP_PORT)

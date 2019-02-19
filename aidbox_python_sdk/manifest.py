@@ -4,7 +4,7 @@ from aiohttp import BasicAuth
 
 class Manifest(object):
 
-    def __init__(self, settings):
+    def __init__(self, settings, resources=None):
         self._settings = settings
         self._subscriptions = {}
         self._subscription_handlers = {}
@@ -21,7 +21,8 @@ class Manifest(object):
                 'secret': settings.APP_SECRET,
             }
         }
-
+        self._resources = resources or {}
+        self.client = None
 
     def init_client(self, config):
         basic_auth = BasicAuth(
@@ -31,6 +32,8 @@ class Manifest(object):
                                  authorization=basic_auth.encode())
 
     def build(self):
+        if self._resources:
+            self._manifest['resources'] = self._resources
         if self._subscriptions:
             self._manifest['subscriptions'] = self._subscriptions
         if self._operations:
@@ -52,7 +55,13 @@ class Manifest(object):
         def wrap(func):
             if not isinstance(path, list):
                 raise ValueError('`Path` must be a list')
-            operation_id = func.__name__
+            _str_path = []
+            for p in path:
+                if isinstance(p, str):
+                    _str_path.append(p)
+                elif isinstance(p, dict):
+                    _str_path.append('{{{}}}'.format(p['name']))
+            operation_id = '{}.{}.{}'.format(func.__module__, func.__name__, '/'.join(_str_path))
             self._operations[operation_id] = {
                 'method': method,
                 'path': path,

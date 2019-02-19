@@ -27,6 +27,8 @@ class Settings:
     APP_URL = Required(v_type=str)
     APP_PORT = Required(v_type=int)
     APP_SECRET = Required(v_type=str)
+    AIO_HOST = Required(v_type=str)
+    AIO_PORT = Required(v_type=str)
 
     def __init__(self, **custom_settings):
         """
