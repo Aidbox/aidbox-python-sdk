@@ -44,27 +44,27 @@ def patient_sub(event):
     return web.json_response({})
 
 
-@manifest.operation(method='POST', path=['signup', 'register'])
-def signup_register_op(operation, params):
+@manifest.operation(method='POST', path=['signup', 'register', {"name": "date"}])
+def signup_register_op(operation, request):
     logging.debug('`signup_register_op` operation handler')
     logging.debug('Operation data: {}'.format(operation))
-    logging.debug('Url params: {}'.format(params))
+    logging.debug('Request: {}'.format(request))
     return web.json_response({})
 
 
 @manifest.operation(method='GET', path=['Patient', '$daily-report'])
-async def daily_patient_report(operation, params):
+async def daily_patient_report(operation, request):
     logging.debug('`daily_patient_report` operation handler')
     logging.debug('Operation data: {}'.format(operation))
-    logging.debug('Url params: {}'.format(params))
+    logging.debug('Request: {}'.format(request))
     return web.json_response({})
 
 
 @manifest.operation(method='POST', path=['User', '$register'])
-async def register_user(operation, params):
+async def register_user(operation, request):
     logging.debug('`register_user` operation handler')
     logging.debug('Operation data: {}'.format(operation))
-    logging.debug('Url params: {}'.format(params))
+    logging.debug('Request: {}'.format(request))
     return web.json_response({})
 
 
