@@ -1,7 +1,7 @@
 import logging
 import coloredlogs
 from aiohttp import web
-
+from datetime import datetime
 from aidbox_python_sdk.main import create_app as _create_app
 from aidbox_python_sdk.settings import Settings
 from aidbox_python_sdk.manifest import Manifest
@@ -75,7 +75,7 @@ async def appointment_sub(event):
     logging.debug('Event: {}'.format(event))
 
 
-@manifest.operation(method='POST', path=['signup', 'register', {"name": "date"}, {"name": "test"}])
+@manifest.operation(methods=['POST', 'PATCH'], path=['signup', 'register', {"name": "date"}, {"name": "test"}])
 def signup_register_op(operation, request):
     logging.debug('`signup_register_op` operation handler')
     logging.debug('Operation data: {}'.format(operation))
@@ -83,7 +83,16 @@ def signup_register_op(operation, request):
     return web.json_response({"success": "Ok"})
 
 
-@manifest.operation(method='GET', path=['Patient', '$daily-report'])
+@manifest.operation(methods=['GET'], path=['signup', 'register', {"name": "date"}, {"name": "test"}])
+def signup_register_op_get(operation, request):
+    logging.debug('`signup_register_op` operation handler')
+    logging.debug('Operation data: {}'.format(operation))
+    logging.debug('Request: {}'.format(request))
+    return web.json_response({"success": "Ok"})
+
+
+@manifest.operation(methods=['GET'], path=['Patient', '$weekly-report'])
+@manifest.operation(methods=['GET'], path=['Patient', '$daily-report'])
 async def daily_patient_report(operation, request):
     logging.debug('`daily_patient_report` operation handler')
     logging.debug('Operation data: {}'.format(operation))
@@ -91,7 +100,7 @@ async def daily_patient_report(operation, request):
     return web.json_response({})
 
 
-@manifest.operation(method='POST', path=['User', '$register'])
+@manifest.operation(methods=['POST'], path=['User', '$register'])
 async def register_user(operation, request):
     logging.debug('`register_user` operation handler')
     logging.debug('Operation data: {}'.format(operation))

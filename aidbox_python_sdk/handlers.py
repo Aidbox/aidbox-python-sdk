@@ -27,6 +27,7 @@ async def subscription(request, data):
 
 
 async def operation(request, data):
+    logger.debug(data)
     logger.debug('Operation handler: {}'.format(data['operation']['id']))
     if 'operation' not in data or 'id' not in data['operation']:
         logger.error('`operation` or `operation[id]` param is missing, data: {}'.format(data))

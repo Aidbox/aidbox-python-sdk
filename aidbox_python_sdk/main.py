@@ -18,12 +18,15 @@ async def init_aidbox(app):
         'url': app['settings'].APP_URL,
         'secret': app['settings'].APP_INIT_CLIENT_SECRET,
     }
-
-    async with app['client'].post(
-            '{}/App/$init'.format(app['settings'].APP_INIT_URL),
-            json=json) as resp:
-        logger.info(resp.status)
-        logger.info(await resp.text())
+    try:
+        async with app['client'].post(
+                '{}/App/$init'.format(app['settings'].APP_INIT_URL),
+                json=json) as resp:
+            logger.info(resp.status)
+            logger.info(await resp.text())
+    except (client_exceptions.ServerDisconnectedError, client_exceptions.ClientConnectionError):
+        logger.error('Aidbox address is unreachable {}'.format(app['settings'].APP_INIT_URL))
+        logger.error('Aidbox app init stopped')
 
 
 async def wait_and_init_aidbox(app):

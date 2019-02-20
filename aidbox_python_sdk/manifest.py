@@ -51,22 +51,28 @@ class Manifest(object):
     def get_subscription_handler(self, path):
         return self._subscription_handlers.get(path)
 
-    def operation(self, method, path):
+    def operation(self, methods, path):
         def wrap(func):
             if not isinstance(path, list):
-                raise ValueError('`Path` must be a list')
+                raise ValueError('`path` must be a list')
+            if not isinstance(methods, list):
+                raise ValueError('`methods` must be a list')
             _str_path = []
             for p in path:
                 if isinstance(p, str):
                     _str_path.append(p)
                 elif isinstance(p, dict):
                     _str_path.append('{{{}}}'.format(p['name']))
-            operation_id = '{}.{}.{}'.format(func.__module__, func.__name__, '/'.join(_str_path))
-            self._operations[operation_id] = {
-                'method': method,
-                'path': path,
-            }
-            self._operation_handlers[operation_id] = func
+            for method in methods:
+                operation_id = '{}_{}_{}_{}'.format(method,
+                                                    func.__module__,
+                                                    func.__name__,
+                                                    '_'.join(_str_path))
+                self._operations[operation_id] = {
+                    'method': method,
+                    'path': path,
+                }
+                self._operation_handlers[operation_id] = func
             return func
         return wrap
 
