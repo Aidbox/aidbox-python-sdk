@@ -39,20 +39,11 @@ async def create_app():
     return await _create_app(settings, manifest, debug=True)
 
 
-"""
-Test REST requests for subs and ops:
-POST /User
-POST /Contract
-POST /Patient
-
-POST /signup/register?param1=123&param2=foo
-GET /Patient/$daily-report?param=papam
-POST /User/$register
-"""
-
-
 @manifest.subscription('Appointment')
 async def appointment_sub(event):
+    """
+    POST /Appointment
+    """
     participants = event['resource']['participant']
     patient_id = next(p['actor']['id'] for p in participants if p['actor']['resourceType'] == 'Patient')
     patient = manifest.client.resources('Patient').get(id=patient_id)
@@ -77,32 +68,24 @@ async def appointment_sub(event):
 
 @manifest.operation(methods=['POST', 'PATCH'], path=['signup', 'register', {"name": "date"}, {"name": "test"}])
 def signup_register_op(operation, request):
+    """
+    POST /signup/register/21.02.19/testvalue
+    PATCH /signup/register/22.02.19/patchtestvalue
+    """
     logging.debug('`signup_register_op` operation handler')
     logging.debug('Operation data: {}'.format(operation))
     logging.debug('Request: {}'.format(request))
-    return web.json_response({"success": "Ok"})
+    return web.json_response({'success': 'Ok', 'request': request['route-params']})
 
 
-@manifest.operation(methods=['GET'], path=['signup', 'register', {"name": "date"}, {"name": "test"}])
-def signup_register_op_get(operation, request):
-    logging.debug('`signup_register_op` operation handler')
-    logging.debug('Operation data: {}'.format(operation))
-    logging.debug('Request: {}'.format(request))
-    return web.json_response({"success": "Ok"})
-
-
-@manifest.operation(methods=['GET'], path=['Patient', '$weekly-report'])
+@manifest.operation(methods=['GET'], path=['Patient', '$weekly-report'], public=True)
 @manifest.operation(methods=['GET'], path=['Patient', '$daily-report'])
 async def daily_patient_report(operation, request):
+    """
+    GET /Patient/$weekly-report
+    GET /Patient/$daily-report
+    """
     logging.debug('`daily_patient_report` operation handler')
     logging.debug('Operation data: {}'.format(operation))
     logging.debug('Request: {}'.format(request))
-    return web.json_response({})
-
-
-@manifest.operation(methods=['POST'], path=['User', '$register'])
-async def register_user(operation, request):
-    logging.debug('`register_user` operation handler')
-    logging.debug('Operation data: {}'.format(operation))
-    logging.debug('Request: {}'.format(request))
-    return web.json_response({})
+    return web.json_response({'type': 'report', 'success': 'Ok', 'msg': 'Response from APP'})

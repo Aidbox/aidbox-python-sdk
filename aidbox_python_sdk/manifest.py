@@ -22,6 +22,7 @@ class Manifest(object):
             }
         }
         self._resources = resources or {}
+        self._app_endpoint_name = '{}-endpoint'.format(settings.APP_ID)
         self.client = None
 
     def init_client(self, config):
@@ -51,7 +52,7 @@ class Manifest(object):
     def get_subscription_handler(self, path):
         return self._subscription_handlers.get(path)
 
-    def operation(self, methods, path):
+    def operation(self, methods, path, public=False):
         def wrap(func):
             if not isinstance(path, list):
                 raise ValueError('`path` must be a list')
@@ -64,7 +65,7 @@ class Manifest(object):
                 elif isinstance(p, dict):
                     _str_path.append('{{{}}}'.format(p['name']))
             for method in methods:
-                operation_id = '{}_{}_{}_{}'.format(method,
+                operation_id = '{}.{}.{}.{}'.format(method,
                                                     func.__module__,
                                                     func.__name__,
                                                     '_'.join(_str_path))
@@ -73,8 +74,25 @@ class Manifest(object):
                     'path': path,
                 }
                 self._operation_handlers[operation_id] = func
+                if public is True:
+                    self._set_access_policy_for_public_op(operation_id)
             return func
         return wrap
 
     def get_operation_handler(self, operation_id):
         return self._operation_handlers.get(operation_id)
+
+    def _set_access_policy_for_public_op(self, operation_id):
+        if 'AccessPolicy' not in self._resources:
+            self._resources['AccessPolicy'] = {}
+        if self._app_endpoint_name not in self._resources['AccessPolicy']:
+            self._resources['AccessPolicy'][self._app_endpoint_name] = {
+                'link': [],
+                'engine': 'allow',
+            }
+        self._resources['AccessPolicy'][self._app_endpoint_name]['link'].append({
+            'id': operation_id,
+            'resourceType': 'Operation',
+        })
+
+
