@@ -39,6 +39,7 @@ async def wait_and_init_aidbox(app):
         except (client_exceptions.InvalidURL, client_exceptions.ClientConnectionError):
             await asyncio.sleep(2)
     await init_aidbox(app)
+    await app['db'].create_all_mappings()
 
 
 async def on_startup(app):
@@ -46,6 +47,7 @@ async def on_startup(app):
         login=app['settings'].APP_INIT_CLIENT_ID,
         password=app['settings'].APP_INIT_CLIENT_SECRET)
     app['client'] = ClientSession(auth=basic_auth)
+    app['db'].set_client(app['client'])
     asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
 
 
@@ -58,7 +60,7 @@ async def on_shutdown(app):
         await app['client'].close()
 
 
-async def create_app(settings, manifest, debug=False):
+async def create_app(settings, manifest, db, debug=False):
     app = web.Application(debug=debug)
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)
@@ -67,6 +69,7 @@ async def create_app(settings, manifest, debug=False):
         name='aidbox-python-sdk',
         settings=settings,
         manifest=manifest,
+        db=db,
         init_aidbox_app=init_aidbox,
         livereload=True
     )
