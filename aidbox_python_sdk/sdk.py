@@ -1,8 +1,9 @@
 from fhirpy import FHIRClient
 from aiohttp import BasicAuth
+from .db import DBProxy
 
 
-class Manifest(object):
+class SDK(object):
 
     def __init__(self, settings, resources=None):
         self._settings = settings
@@ -24,6 +25,7 @@ class Manifest(object):
         self._resources = resources or {}
         self._app_endpoint_name = '{}-endpoint'.format(settings.APP_ID)
         self.client = None
+        self.db = DBProxy(self._settings)
 
     def init_client(self, config):
         basic_auth = BasicAuth(
@@ -32,7 +34,7 @@ class Manifest(object):
         self.client = FHIRClient('{}/fhir'.format(config['box']['base-url']),
                                  authorization=basic_auth.encode())
 
-    def build(self):
+    def build_manifest(self):
         if self._resources:
             self._manifest['resources'] = self._resources
         if self._subscriptions:
@@ -94,5 +96,3 @@ class Manifest(object):
             'id': operation_id,
             'resourceType': 'Operation',
         })
-
-

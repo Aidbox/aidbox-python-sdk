@@ -49,8 +49,7 @@ class DBProxy(object):
             # logger.debug(await resp.text())
             if 200 <= resp.status < 300:
                 return await resp.json()
-            logger.error('ERRORORRORROORO')
-            # raise ValueError('SQL response error: {}, status: {}'.format(await resp.text(), resp.status))
+            raise ValueError('SQL response error: {}, status: {}'.format(await resp.text(), resp.status))
 
     async def compile_statement(self, statement):
         # logger.debug('Type of the statement: {}'.format(type(statement)))

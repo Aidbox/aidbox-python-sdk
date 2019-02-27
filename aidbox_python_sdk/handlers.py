@@ -7,8 +7,8 @@ routes = web.RouteTableDef()
 
 
 async def manifest(request, data):
-    logger.info('app manifest: {}'.format(request.app['manifest'].build()))
-    return web.json_response({'manifest': request.app['manifest'].build()})
+    logger.info('app manifest: {}'.format(request.app['sdk'].build_manifest()))
+    return web.json_response({'manifest': request.app['sdk'].build_manifest()})
 
 
 async def subscription(request, data):
@@ -16,7 +16,7 @@ async def subscription(request, data):
     if 'handler' not in data or 'event' not in data:
         logger.error('`handler` and/or `event` param is missing, data: {}'.format(data))
         raise web.HTTPBadRequest()
-    handler = request.app['manifest'].get_subscription_handler(data['handler'])
+    handler = request.app['sdk'].get_subscription_handler(data['handler'])
     if not handler:
         logger.error('Subscription handler `{}` was not found'.format(data['handler']))
         raise web.HTTPNotFound()
@@ -32,7 +32,7 @@ async def operation(request, data):
     if 'operation' not in data or 'id' not in data['operation']:
         logger.error('`operation` or `operation[id]` param is missing, data: {}'.format(data))
         raise web.HTTPBadRequest()
-    handler = request.app['manifest'].get_operation_handler(data['operation']['id'])
+    handler = request.app['sdk'].get_operation_handler(data['operation']['id'])
     if not handler:
         logger.error('Operation handler `{}` was not found'.format(data['handler']))
         raise web.HTTPNotFound()
@@ -48,7 +48,7 @@ async def log_request(request, data):
 
 
 async def config(request, config):
-    request.app['manifest'].init_client(config)
+    request.app['sdk'].init_client(config)
     return web.json_response({})
 
 
@@ -64,7 +64,6 @@ TYPES = {
 async def init(request):
     await request.app['init_aidbox_app'](request.app)
     return web.json_response({})
-
 
 
 @routes.post('/')
