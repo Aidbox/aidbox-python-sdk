@@ -121,8 +121,6 @@ async def db_tests(request):
         # select('*').where(app.c.resource['resources'].has_all(array(['User', 'Client']))),
     ]
     for statement in test_statements:
-        query = await db.compile_statement(statement)
-        logging.debug('Builded query:\n{}'.format(query))
-        result = await db.make_query(query)
+        result = await db.alchemy(statement)
         logging.debug('Result:\n{}'.format(result))
     return web.json_response({})

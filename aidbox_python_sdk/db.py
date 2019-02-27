@@ -1,6 +1,7 @@
 import logging
 import json
 from sqlalchemy import BigInteger, Column, DateTime, Enum, Text, text, TypeDecorator
+from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy.dialects.postgresql import JSONB, dialect as postgresql_dialect
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -41,9 +42,11 @@ class DBProxy(object):
     def set_client(self, client):
         self._client = client
 
-    async def make_query(self, sql_query):
+    async def raw_sql(self, sql_query):
         if not self._client:
             raise ValueError('Client not set')
+        if not isinstance(sql_query, str):
+            ValueError('sql_query must be a str')
         async with self._client.post(
                 '{}/$psql'.format(self._devbox_url), json={'query': sql_query}) as resp:
             # logger.debug(await resp.text())
@@ -52,8 +55,14 @@ class DBProxy(object):
             raise ValueError('SQL response error: {}, status: {}'.format(await resp.text(), resp.status))
 
     async def compile_statement(self, statement):
-        # logger.debug('Type of the statement: {}'.format(type(statement)))
         return str(statement.compile(dialect=postgresql_dialect(), compile_kwargs={"literal_binds": True}))
+
+    async def alchemy(self, statement):
+        if not isinstance(statement, ClauseElement):
+            ValueError('statement must be a sqlalchemy expression')
+        query = await self.compile_statement(statement)
+        logging.debug('Builded query:\n{}'.format(query))
+        return await self.raw_sql(query)
 
     async def _get_all_table_names(self):
         query = """
@@ -64,7 +73,7 @@ class DBProxy(object):
             AND tablename NOt in ('_box', 'devboxtoken')
             AND tablename not like '%_history';
         """
-        tables = await self.make_query(query)
+        tables = await self.raw_sql(query)
         return tables
 
     def _create_table_mapping(self, table_name):
