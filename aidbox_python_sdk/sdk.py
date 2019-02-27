@@ -1,11 +1,15 @@
+import logging
 from fhirpy import FHIRClient
+from fhirpy.exceptions import FHIRResourceNotFound
 from aiohttp import BasicAuth
 from .db import DBProxy
+
+logger = logging.getLogger()
 
 
 class SDK(object):
 
-    def __init__(self, settings, resources=None):
+    def __init__(self, settings, resources=None, seeds=None):
         self._settings = settings
         self._subscriptions = {}
         self._subscription_handlers = {}
@@ -23,6 +27,7 @@ class SDK(object):
             }
         }
         self._resources = resources or {}
+        self._seeds = seeds or {}
         self._app_endpoint_name = '{}-endpoint'.format(settings.APP_ID)
         self.client = None
         self.db = DBProxy(self._settings)
@@ -33,6 +38,23 @@ class SDK(object):
             password=config['client']['secret'])
         self.client = FHIRClient('{}/fhir'.format(config['box']['base-url']),
                                  authorization=basic_auth.encode())
+        self._create_seed_resources()
+
+    def _create_seed_resources(self):
+        for entity, resources in self._seeds.items():
+            for resource_id, resource in resources.items():
+                try:
+                    self.client.resources(entity).get(id=resource_id)
+                except FHIRResourceNotFound:
+                    seed_resource = self.client.resource(
+                        entity,
+                        id=resource_id,
+                        **resource
+                    )
+                    seed_resource.save()
+                    logger.debug('Created resource "{}" with id "{}"'.format(entity, resource_id))
+                else:
+                    logger.debug('Resource "{}" with id "{}" already exists'.format(entity, resource_id))
 
     def build_manifest(self):
         if self._resources:

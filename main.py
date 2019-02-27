@@ -35,10 +35,43 @@ resources = {
             'engine': 'json-schema',
             'schema': {'required': ['user']}
         }
-    }
-
+    },
 }
-sdk = SDK(settings, resources)
+seeds = {
+    'Patient': {
+        'dfaa8925-f32e-4687-8fd0-272844cff544': {
+            'name': [{
+                'use': 'official',
+                'family': 'Hauck852',
+                'given': [
+                    'Alayna598'
+                ],
+                'prefix': [
+                    'Ms.'
+                ]
+            }],
+            'gender': 'female',
+        },
+        'dfaa8925-f32e-4687-8fd0-272844cff545': {
+            'name': [{
+                'use': 'official',
+                'family': 'Doe12',
+                'given': [
+                    'John46'
+                ],
+                'prefix': [
+                    'Ms.'
+                ]
+            }]
+        }
+    },
+    'Contract': {
+        'e9a3ce1d-745d-4fe1-8e97-807a820e6151': {},
+        'e9a3ce1d-745d-4fe1-8e97-807a820e6152': {},
+        'e9a3ce1d-745d-4fe1-8e97-807a820e6153': {},
+    }
+}
+sdk = SDK(settings, resources, seeds=seeds)
 
 
 async def create_app():
