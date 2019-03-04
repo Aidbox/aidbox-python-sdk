@@ -5,7 +5,7 @@ from aiohttp import web, ClientSession, BasicAuth, client_exceptions
 
 from .handlers import routes
 
-logger = logging.getLogger()
+logger = logging.getLogger('aidbox_sdk')
 THIS_DIR = Path(__file__).parent
 BASE_DIR = THIS_DIR.parent
 

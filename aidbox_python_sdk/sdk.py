@@ -4,7 +4,7 @@ from fhirpy.exceptions import FHIRResourceNotFound
 from aiohttp import BasicAuth
 from .db import DBProxy
 
-logger = logging.getLogger()
+logger = logging.getLogger('aidbox_sdk')
 
 
 class SDK(object):
@@ -52,9 +52,9 @@ class SDK(object):
                         **resource
                     )
                     seed_resource.save()
-                    logger.debug('Created resource "{}" with id "{}"'.format(entity, resource_id))
+                    logger.debug('Created resource "%s" with id "%s"', entity, resource_id)
                 else:
-                    logger.debug('Resource "{}" with id "{}" already exists'.format(entity, resource_id))
+                    logger.debug('Resource "%s" with id "%s" already exists', entity, resource_id)
 
     def build_manifest(self):
         if self._resources:

@@ -12,6 +12,7 @@ from aidbox_python_sdk.sdk import SDK
 from aidbox_python_sdk.handlers import routes
 
 
+logger = logging.getLogger()
 coloredlogs.install(level='DEBUG', fmt='%(asctime)s %(levelname)s %(message)s')
 
 settings = Settings(**{})
@@ -112,8 +113,8 @@ def signup_register_op(operation, request):
     PATCH /signup/register/22.02.19/patchtestvalue
     """
     logging.debug('`signup_register_op` operation handler')
-    logging.debug('Operation data: {}'.format(operation))
-    logging.debug('Request: {}'.format(request))
+    logging.debug('Operation data: %s', operation)
+    logging.debug('Request: %s', request)
     return web.json_response({'success': 'Ok', 'request': request['route-params']})
 
 
@@ -125,8 +126,8 @@ async def daily_patient_report(operation, request):
     GET /Patient/$daily-report
     """
     logging.debug('`daily_patient_report` operation handler')
-    logging.debug('Operation data: {}'.format(operation))
-    logging.debug('Request: {}'.format(request))
+    logging.debug('Operation data: %s', operation)
+    logging.debug('Request: %s', request)
     return web.json_response({'type': 'report', 'success': 'Ok', 'msg': 'Response from APP'})
 
 
@@ -155,5 +156,5 @@ async def db_tests(request):
     ]
     for statement in test_statements:
         result = await db.alchemy(statement)
-        logging.debug('Result:\n{}'.format(result))
+        logging.debug('Result:\n%s', result)
     return web.json_response({})

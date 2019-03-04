@@ -2,7 +2,7 @@ import logging
 import asyncio
 from aiohttp import web
 
-logger = logging.getLogger()
+logger = logging.getLogger('aidbox_sdk')
 routes = web.RouteTableDef()
 
 

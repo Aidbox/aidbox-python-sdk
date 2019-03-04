@@ -7,7 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 metadata = Base.metadata
-logger = logging.getLogger()
+logger = logging.getLogger('aidbox_sdk.db')
 
 
 class _JSONB(TypeDecorator):
@@ -47,12 +47,10 @@ class DBProxy(object):
             raise ValueError('Client not set')
         if not isinstance(sql_query, str):
             ValueError('sql_query must be a str')
-        async with self._client.post(
-                '{}/$psql'.format(self._devbox_url), json={'query': sql_query}) as resp:
-            # logger.debug(await resp.text())
-            if 200 <= resp.status < 300:
-                return await resp.json()
-            raise ValueError('SQL response error: {}, status: {}'.format(await resp.text(), resp.status))
+        query_url = '{}/$psql'.format(self._devbox_url)
+        async with self._client.post(query_url, json={'query': sql_query}, raise_for_status=True) as resp:
+            logger.debug(await resp.text())
+            return await resp.json()
 
     async def compile_statement(self, statement):
         return str(statement.compile(dialect=postgresql_dialect(), compile_kwargs={"literal_binds": True}))
@@ -61,28 +59,22 @@ class DBProxy(object):
         if not isinstance(statement, ClauseElement):
             ValueError('statement must be a sqlalchemy expression')
         query = await self.compile_statement(statement)
-        logging.debug('Builded query:\n{}'.format(query))
+        logger.debug('Builded query:\n%s', query)
         return await self.raw_sql(query)
 
-    async def _get_all_table_names(self):
-        query = """
-            SELECT tablename FROM pg_catalog.pg_tables
-            WHERE
-            schemaname != 'pg_catalog'
-            AND schemaname != 'information_schema'
-            AND tablename NOt in ('_box', 'devboxtoken')
-            AND tablename not like '%_history';
-        """
-        tables = await self.raw_sql(query)
-        return tables
+    async def _get_all_entities_name(self):
+        query_url = '{}/Entity?type=resource&_elements=id'.format(self._devbox_url)
+        async with self._client.get(query_url, raise_for_status=True) as resp:
+            json_resp = await resp.json()
+            return [entry['resource']['id'] for entry in json_resp['entry']]
 
     def _create_table_mapping(self, table_name):
         mapping = type(table_name.capitalize(), (BaseAidboxMapping,), {'__tablename__': table_name})
         return mapping()
 
     async def create_all_mappings(self):
-        result = await self._get_all_table_names()
-        tables = result[0]['result']
+        tables = await self._get_all_entities_name()
+        logger.debug(tables)
         for t in tables:
-            setattr(self, t['tablename'].capitalize(), self._create_table_mapping(t['tablename']))
+            setattr(self, t, self._create_table_mapping(t.lower()))
         logger.debug('{} table mappings were created'.format(len(tables)))
