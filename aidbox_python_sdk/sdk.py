@@ -9,7 +9,7 @@ logger = logging.getLogger('aidbox_sdk')
 
 class SDK(object):
 
-    def __init__(self, settings, resources=None, seeds=None):
+    def __init__(self, settings, resources=None, seeds=None, on_ready=None):
         self._settings = settings
         self._subscriptions = {}
         self._subscription_handlers = {}
@@ -28,6 +28,7 @@ class SDK(object):
         }
         self._resources = resources or {}
         self._seeds = seeds or {}
+        self._on_ready = on_ready
         self._app_endpoint_name = '{}-endpoint'.format(settings.APP_ID)
         self.client = None
         self.db = DBProxy(self._settings)
@@ -39,6 +40,8 @@ class SDK(object):
         self.client = FHIRClient('{}/fhir'.format(config['box']['base-url']),
                                  authorization=basic_auth.encode())
         self._create_seed_resources()
+        if callable(self._on_ready):
+            self._on_ready()
 
     def _create_seed_resources(self):
         for entity, resources in self._seeds.items():
