@@ -9,7 +9,8 @@ logger = logging.getLogger('aidbox_sdk')
 
 class SDK(object):
 
-    def __init__(self, settings, resources=None, seeds=None, on_ready=None):
+    def __init__(self, settings, *, entities=None, resources=None, seeds=None,
+                 on_ready=None):
         self._settings = settings
         self._subscriptions = {}
         self._subscription_handlers = {}
@@ -27,6 +28,7 @@ class SDK(object):
             }
         }
         self._resources = resources or {}
+        self._entities = entities or {}
         self._seeds = seeds or {}
         self._on_ready = on_ready
         self._app_endpoint_name = '{}-endpoint'.format(settings.APP_ID)
@@ -62,6 +64,8 @@ class SDK(object):
     def build_manifest(self):
         if self._resources:
             self._manifest['resources'] = self._resources
+        if self._entities:
+            self._manifest['entities'] = self._entities
         if self._subscriptions:
             self._manifest['subscriptions'] = self._subscriptions
         if self._operations:

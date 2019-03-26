@@ -72,7 +72,7 @@ seeds = {
         'e9a3ce1d-745d-4fe1-8e97-807a820e6153': {},
     }
 }
-sdk = SDK(settings, resources, seeds=seeds)
+sdk = SDK(settings, resources=resources, seeds=seeds)
 
 
 async def create_app():
