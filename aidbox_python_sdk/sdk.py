@@ -40,7 +40,8 @@ class SDK(object):
             login=config['client']['id'],
             password=config['client']['secret'])
         self.client = FHIRClient('{}/fhir'.format(config['box']['base-url']),
-                                 authorization=basic_auth.encode())
+                                 authorization=basic_auth.encode(),
+                                 without_cache=True)
         self._create_seed_resources()
         if callable(self._on_ready):
             self._on_ready()
