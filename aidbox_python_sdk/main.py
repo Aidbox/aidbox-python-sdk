@@ -33,7 +33,7 @@ async def init_aidbox(app):
 async def wait_and_init_aidbox(app):
     while 1:
         try:
-            address = 'http://{}'.format(app['settings'].APP_URL)
+            address = app['settings'].APP_URL
             logger.info("Check awailability of {}".format(address))
             async with app['client'].get(address):
                 pass
