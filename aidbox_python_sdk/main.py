@@ -38,7 +38,9 @@ async def wait_and_init_aidbox(app):
             async with app['client'].get(address, timeout=2):
                 pass
             break
-        except (client_exceptions.InvalidURL, client_exceptions.ClientConnectionError):
+        except (client_exceptions.InvalidURL,
+                client_exceptions.ClientConnectionError,
+                asyncio.TimeoutError):
             await asyncio.sleep(2)
     await app['sdk'].db.create_all_mappings()
     await init_aidbox(app)
