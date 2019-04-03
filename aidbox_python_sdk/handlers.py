@@ -83,3 +83,8 @@ async def dispatch(request):
     }
     logger.info(req)
     return web.json_response(req, status=200)
+
+
+@routes.get('/')
+async def health_check(request):
+    return web.json_response({'status': 'OK'}, status=200)
