@@ -33,7 +33,7 @@ async def init_aidbox(app):
 async def wait_and_init_aidbox(app):
     while 1:
         try:
-            address = 'http://{}:{}/'.format(app['settings'].AIO_HOST, app['settings'].AIO_PORT)
+            address = 'http://{}:{}/'.format(app['settings'].APP_URL, app['settings'].AIO_PORT)
             async with app['client'].get(address):
                 pass
             break
