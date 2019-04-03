@@ -35,7 +35,7 @@ async def wait_and_init_aidbox(app):
         try:
             address = app['settings'].APP_URL
             logger.info("Check awailability of {}".format(address))
-            async with app['client'].get(address):
+            async with app['client'].get(address, timeout=2):
                 pass
             break
         except (client_exceptions.InvalidURL, client_exceptions.ClientConnectionError):
