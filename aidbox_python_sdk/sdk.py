@@ -1,6 +1,6 @@
 import logging
-from fhirpy import FHIRClient
-from fhirpy.exceptions import FHIRResourceNotFound
+from aidboxpy import AidboxClient
+from base_fhirpy.exceptions import ResourceNotFound
 from aiohttp import BasicAuth
 from .db import DBProxy
 
@@ -39,9 +39,8 @@ class SDK(object):
         basic_auth = BasicAuth(
             login=config['client']['id'],
             password=config['client']['secret'])
-        self.client = FHIRClient('{}/fhir'.format(config['box']['base-url']),
-                                 authorization=basic_auth.encode(),
-                                 without_cache=True)
+        self.client = AidboxClient('{}'.format(config['box']['base-url']),
+                                   authorization=basic_auth.encode())
         self._create_seed_resources()
         if callable(self._on_ready):
             self._on_ready()
@@ -51,7 +50,7 @@ class SDK(object):
             for resource_id, resource in resources.items():
                 try:
                     self.client.resources(entity).get(id=resource_id)
-                except FHIRResourceNotFound:
+                except ResourceNotFound:
                     seed_resource = self.client.resource(
                         entity,
                         id=resource_id,

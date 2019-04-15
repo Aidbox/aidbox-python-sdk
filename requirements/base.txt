@@ -3,5 +3,6 @@ aiohttp==3.4.4
 pytest-aiohttp==0.3.0
 pytest-cov==2.6.0
 pytest==4.0.1
-fhirpy==0.2.0
 SQLAlchemy==1.2.18
+git+git://github.com/beda-software/base-fhir-py.git@9d2a3a26a40116a437f3902b4064a110fd46cf9e
+git+git://github.com/beda-software/aidbox-py.git@654fbecd913b6a8aa9c92578858e45804089a2d7
