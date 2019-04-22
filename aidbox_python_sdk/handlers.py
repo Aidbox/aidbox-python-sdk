@@ -22,7 +22,7 @@ async def subscription(request, data):
         raise web.HTTPNotFound()
     result = handler(data['event'])
     if asyncio.iscoroutine(result):
-        await result
+        asyncio.get_event_loop().create_task(result)
     return web.json_response({})
 
 
