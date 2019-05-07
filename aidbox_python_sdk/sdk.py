@@ -94,7 +94,7 @@ class SDK(object):
                 if isinstance(p, str):
                     _str_path.append(p)
                 elif isinstance(p, dict):
-                    _str_path.append('{{{}}}'.format(p['name']))
+                    _str_path.append('__{}__'.format(p['name']))
             for method in methods:
                 operation_id = '{}.{}.{}.{}'.format(method,
                                                     func.__module__,
