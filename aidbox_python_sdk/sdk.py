@@ -83,7 +83,9 @@ class SDK(object):
     def get_subscription_handler(self, path):
         return self._subscription_handlers.get(path)
 
-    def operation(self, methods, path, public=False):
+    def operation(self, methods, path, public=False, access_policy=None):
+        if public == True and access_policy is not None:
+            raise ValueError('Operation might be public or have access policy, not both')
         def wrap(func):
             if not isinstance(path, list):
                 raise ValueError('`path` must be a list')
@@ -94,7 +96,7 @@ class SDK(object):
                 if isinstance(p, str):
                     _str_path.append(p)
                 elif isinstance(p, dict):
-                    _str_path.append('{{{}}}'.format(p['name']))
+                    _str_path.append('__{}__'.format(p['name']))
             for method in methods:
                 operation_id = '{}.{}.{}.{}'.format(method,
                                                     func.__module__,
@@ -107,11 +109,27 @@ class SDK(object):
                 self._operation_handlers[operation_id] = func
                 if public is True:
                     self._set_access_policy_for_public_op(operation_id)
+                elif access_policy is not None:
+                    self._set_operation_access_policy(operation_id, access_policy)
             return func
         return wrap
 
     def get_operation_handler(self, operation_id):
         return self._operation_handlers.get(operation_id)
+
+    def _set_operation_access_policy(self, operation_id, access_policy):
+        if 'AccessPolicy' not in self._resources:
+            self._resources['AccessPolicy'] = {}
+        self._resources['AccessPolicy'][operation_id] = {
+            'link': [
+                {
+                    'id': operation_id,
+                    'resourceType': 'Operation'
+                }
+            ],
+            'engine': access_policy['engine'],
+            'schema': access_policy['schema']
+        }
 
     def _set_access_policy_for_public_op(self, operation_id):
         if 'AccessPolicy' not in self._resources:
