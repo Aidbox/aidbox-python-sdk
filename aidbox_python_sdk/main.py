@@ -1,7 +1,10 @@
 import logging
-import asyncio
+import sys
+import errno
+
 from pathlib import Path
 from aiohttp import web, ClientSession, BasicAuth, client_exceptions
+import asyncio
 
 from .handlers import routes
 
@@ -15,11 +18,13 @@ def setup_routes(app):
 
 
 async def init_aidbox(app):
-    json = {
-        'url': app['settings'].APP_URL,
-        'secret': app['settings'].APP_INIT_CLIENT_SECRET,
-    }
     try:
+        await app['sdk'].db.create_all_mappings()
+
+        json = {
+            'url': app['settings'].APP_URL,
+            'secret': app['settings'].APP_INIT_CLIENT_SECRET,
+        }
         async with app['client'].post(
                 '{}/App/$init'.format(app['settings'].APP_INIT_URL),
                 json=json) as resp:
@@ -28,22 +33,7 @@ async def init_aidbox(app):
     except (client_exceptions.ServerDisconnectedError, client_exceptions.ClientConnectionError):
         logger.error('Aidbox address is unreachable {}'.format(app['settings'].APP_INIT_URL))
         logger.error('Aidbox app init stopped')
-
-
-async def wait_and_init_aidbox(app):
-    while 1:
-        try:
-            address = app['settings'].APP_URL
-            logger.info("Check awailability of {}".format(address))
-            async with app['client'].get(address, timeout=2):
-                pass
-            break
-        except (client_exceptions.InvalidURL,
-                client_exceptions.ClientConnectionError,
-                asyncio.TimeoutError):
-            await asyncio.sleep(2)
-    await app['sdk'].db.create_all_mappings()
-    await init_aidbox(app)
+        sys.exit(errno.EINTR)
 
 
 async def on_startup(app):
@@ -51,8 +41,9 @@ async def on_startup(app):
         login=app['settings'].APP_INIT_CLIENT_ID,
         password=app['settings'].APP_INIT_CLIENT_SECRET)
     app['client'] = ClientSession(auth=basic_auth)
+
     app['sdk'].db.set_client(app['client'])
-    asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
+    asyncio.get_event_loop().create_task(init_aidbox(app))
 
 
 async def on_cleanup(app):
@@ -78,3 +69,4 @@ async def create_app(settings, sdk, debug=False):
     )
     setup_routes(app)
     return app
+
