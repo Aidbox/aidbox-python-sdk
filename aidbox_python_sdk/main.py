@@ -19,20 +19,28 @@ def setup_routes(app):
 
 async def init_aidbox(app):
     try:
-        await app['sdk'].db.create_all_mappings()
-
         json = {
             'url': app['settings'].APP_URL,
             'secret': app['settings'].APP_INIT_CLIENT_SECRET,
         }
         async with app['client'].post(
                 '{}/App/$init'.format(app['settings'].APP_INIT_URL),
-                json=json) as resp:
-            logger.info(resp.status)
-            logger.info(await resp.text())
-    except (client_exceptions.ServerDisconnectedError, client_exceptions.ClientConnectionError):
-        logger.error('Aidbox address is unreachable {}'.format(app['settings'].APP_INIT_URL))
-        logger.error('Aidbox app init stopped')
+                json=json
+        ) as resp:
+            if 200 <= resp.status < 300:
+                logger.info('Aidbox app successfully initialized')
+            else:
+                logger.error(
+                    'Aidbox app initialized failed. '
+                    'Response from Aidbox: {0} {1}'.format(
+                        resp.status, await resp.text()))
+                sys.exit(errno.EINTR)
+
+        await app['sdk'].db.create_all_mappings()
+    except (client_exceptions.ServerDisconnectedError,
+            client_exceptions.ClientConnectionError):
+        logger.error('Aidbox address is unreachable {}'.format(
+            app['settings'].APP_INIT_URL))
         sys.exit(errno.EINTR)
 
 

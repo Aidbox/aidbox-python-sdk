@@ -49,7 +49,7 @@ class DBProxy(object):
             ValueError('sql_query must be a str')
         query_url = '{}/$psql'.format(self._devbox_url)
         async with self._client.post(query_url, json={'query': sql_query}, raise_for_status=True) as resp:
-            logger.debug(await resp.text())
+            logger.debug('$psql answer {0}'.format(await resp.text()))
             return await resp.json()
 
     async def compile_statement(self, statement):
@@ -59,7 +59,7 @@ class DBProxy(object):
         if not isinstance(statement, ClauseElement):
             ValueError('statement must be a sqlalchemy expression')
         query = await self.compile_statement(statement)
-        logger.debug('Builded query:\n%s', query)
+        logger.debug('Built query:\n%s', query)
         return await self.raw_sql(query)
 
     async def _get_all_entities_name(self):
@@ -69,12 +69,14 @@ class DBProxy(object):
             return [entry['resource']['id'] for entry in json_resp['entry']]
 
     def _create_table_mapping(self, table_name):
-        mapping = type(table_name.capitalize(), (BaseAidboxMapping,), {'__tablename__': table_name})
+        mapping = type(
+            table_name.capitalize(),
+            (BaseAidboxMapping,),
+            {'__tablename__': table_name})
         return mapping()
 
     async def create_all_mappings(self):
         tables = await self._get_all_entities_name()
-        logger.debug(tables)
         for t in tables:
             setattr(self, t, self._create_table_mapping(t.lower()))
         logger.debug('{} table mappings were created'.format(len(tables)))
