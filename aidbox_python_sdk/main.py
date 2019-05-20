@@ -44,6 +44,20 @@ async def init_aidbox(app):
         sys.exit(errno.EINTR)
 
 
+async def wait_and_init_aidbox(app):
+    while 1:
+        try:
+            address = 'http://{}:{}/'.format(
+                app['settings'].AIO_HOST, app['settings'].AIO_PORT)
+            async with app['client'].get(address):
+                pass
+            break
+        except (client_exceptions.InvalidURL,
+                client_exceptions.ClientConnectionError):
+            await asyncio.sleep(2)
+    await init_aidbox(app)
+
+
 async def on_startup(app):
     basic_auth = BasicAuth(
         login=app['settings'].APP_INIT_CLIENT_ID,
@@ -51,7 +65,7 @@ async def on_startup(app):
     app['client'] = ClientSession(auth=basic_auth)
 
     app['sdk'].db.set_client(app['client'])
-    asyncio.get_event_loop().create_task(init_aidbox(app))
+    asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
 
 
 async def on_cleanup(app):
