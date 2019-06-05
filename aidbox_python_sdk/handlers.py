@@ -42,7 +42,7 @@ async def operation(request, data):
 
 
 async def config(request, config):
-    request.app['sdk'].init_client(config)
+    await request.app['sdk'].init_client(config)
     return web.json_response({})
 
 

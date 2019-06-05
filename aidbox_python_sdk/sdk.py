@@ -35,17 +35,17 @@ class SDK(object):
         self.client = None
         self.db = DBProxy(self._settings)
 
-    def init_client(self, config):
+    async def init_client(self, config):
         basic_auth = BasicAuth(
             login=config['client']['id'],
             password=config['client']['secret'])
         self.client = AidboxClient('{}'.format(config['box']['base-url']),
                                    authorization=basic_auth.encode())
-        self._create_seed_resources()
+        await self._create_seed_resources()
         if callable(self._on_ready):
-            self._on_ready()
+            await self._on_ready()
 
-    def _create_seed_resources(self):
+    async def _create_seed_resources(self):
         for entity, resources in self._seeds.items():
             for resource_id, resource in resources.items():
                 try:

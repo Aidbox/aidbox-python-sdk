@@ -42,13 +42,18 @@ class DBProxy(object):
     def set_client(self, client):
         self._client = client
 
-    async def raw_sql(self, sql_query):
+    async def raw_sql(self, sql_query, execute=False):
         if not self._client:
             raise ValueError('Client not set')
         if not isinstance(sql_query, str):
             ValueError('sql_query must be a str')
         query_url = '{}/$psql'.format(self._devbox_url)
-        async with self._client.post(query_url, json={'query': sql_query}, raise_for_status=True) as resp:
+        async with self._client.post(
+                query_url,
+                json={'query': sql_query},
+                params={'execute': 'true'} if execute else {},
+                raise_for_status=True
+        ) as resp:
             logger.debug('$psql answer {0}'.format(await resp.text()))
             return await resp.json()
 
