@@ -58,7 +58,9 @@ class DBProxy(object):
             return await resp.json()
 
     async def compile_statement(self, statement):
-        return str(statement.compile(dialect=postgresql_dialect(), compile_kwargs={"literal_binds": True}))
+        return str(statement.compile(
+            dialect=postgresql_dialect(),
+            compile_kwargs={"literal_binds": True}))
 
     async def alchemy(self, statement):
         if not isinstance(statement, ClauseElement):
@@ -68,7 +70,8 @@ class DBProxy(object):
         return await self.raw_sql(query)
 
     async def _get_all_entities_name(self):
-        query_url = '{}/Entity?type=resource&_elements=id'.format(self._devbox_url)
+        query_url = '{}/Entity?type=resource&_elements=id&_count=10000'.format(
+            self._devbox_url)
         async with self._client.get(query_url, raise_for_status=True) as resp:
             json_resp = await resp.json()
             return [entry['resource']['id'] for entry in json_resp['entry']]
