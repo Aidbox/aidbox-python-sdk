@@ -1,8 +1,9 @@
 import logging
 import json
-from sqlalchemy import BigInteger, Column, DateTime, Enum, Text, text, TypeDecorator
+from sqlalchemy import (BigInteger, Column, DateTime, Enum,
+    Text, text, TypeDecorator)
 from sqlalchemy.sql.elements import ClauseElement
-from sqlalchemy.dialects.postgresql import JSONB, dialect as postgresql_dialect
+from sqlalchemy.dialects.postgresql import JSONB, ARRAY, dialect as postgresql_dialect
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -16,6 +17,17 @@ class _JSONB(TypeDecorator):
     def process_literal_param(self, value, dialect):
         if isinstance(value, dict):
             return '\'{}\''.format(json.dumps(value))
+        elif isinstance(value, str):
+            return value
+        raise ValueError('Don\'t know how to literal-quote value of type {}'.format(type(value)))
+
+
+class _ARRAY(TypeDecorator):
+    impl = ARRAY
+
+    def process_literal_param(self, value, dialect):
+        if isinstance(value, list):
+            return 'ARRAY{}'.format(value)
         elif isinstance(value, str):
             return value
         raise ValueError('Don\'t know how to literal-quote value of type {}'.format(type(value)))
