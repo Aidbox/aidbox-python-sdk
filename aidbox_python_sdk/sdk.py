@@ -36,15 +36,10 @@ class SDK(object):
         self.client = None
         self.db = DBProxy(self._settings)
 
-    async def init_client(self, config):
-        basic_auth = BasicAuth(
-            login=config['client']['id'],
-            password=config['client']['secret'])
-        self.client = AidboxClient('{}'.format(config['box']['base-url']),
-                                   authorization=basic_auth.encode())
+    async def initialize(self, config):
+        await self._init_client(config)
         await self._create_seed_resources()
         await self.db.create_all_mappings()
-
         self._initialized = True
         logger.info('Aidbox app successfully initialized')
 
@@ -53,6 +48,13 @@ class SDK(object):
 
     def is_initialized(self):
         return self._initialized
+
+    async def _init_client(self, config):
+        basic_auth = BasicAuth(
+            login=config['client']['id'],
+            password=config['client']['secret'])
+        self.client = AidboxClient('{}'.format(config['box']['base-url']),
+                                   authorization=basic_auth.encode())
 
     async def _create_seed_resources(self):
         for entity, resources in self._seeds.items():
