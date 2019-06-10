@@ -1,6 +1,6 @@
 import logging
-from fhirpy import FHIRClient
-from fhirpy.exceptions import FHIRResourceNotFound
+from aidboxpy import AidboxClient
+from base_fhirpy.exceptions import ResourceNotFound
 from aiohttp import BasicAuth
 from .db import DBProxy
 
@@ -32,26 +32,30 @@ class SDK(object):
         self._seeds = seeds or {}
         self._on_ready = on_ready
         self._app_endpoint_name = '{}-endpoint'.format(settings.APP_ID)
+        self._initialized = False
         self.client = None
         self.db = DBProxy(self._settings)
 
-    def init_client(self, config):
+    async def init_client(self, config):
         basic_auth = BasicAuth(
             login=config['client']['id'],
             password=config['client']['secret'])
-        self.client = FHIRClient('{}/fhir'.format(config['box']['base-url']),
-                                 authorization=basic_auth.encode(),
-                                 without_cache=True)
-        self._create_seed_resources()
+        self.client = AidboxClient('{}'.format(config['box']['base-url']),
+                                   authorization=basic_auth.encode())
+        await self._create_seed_resources()
+        self._initialized = True
         if callable(self._on_ready):
-            self._on_ready()
+            await self._on_ready()
 
-    def _create_seed_resources(self):
+    def is_initialized(self):
+        return self._initialized
+
+    async def _create_seed_resources(self):
         for entity, resources in self._seeds.items():
             for resource_id, resource in resources.items():
                 try:
                     self.client.resources(entity).get(id=resource_id)
-                except FHIRResourceNotFound:
+                except ResourceNotFound:
                     seed_resource = self.client.resource(
                         entity,
                         id=resource_id,
@@ -84,7 +88,9 @@ class SDK(object):
     def get_subscription_handler(self, path):
         return self._subscription_handlers.get(path)
 
-    def operation(self, methods, path, public=False):
+    def operation(self, methods, path, public=False, access_policy=None):
+        if public == True and access_policy is not None:
+            raise ValueError('Operation might be public or have access policy, not both')
         def wrap(func):
             if not isinstance(path, list):
                 raise ValueError('`path` must be a list')
@@ -95,7 +101,7 @@ class SDK(object):
                 if isinstance(p, str):
                     _str_path.append(p)
                 elif isinstance(p, dict):
-                    _str_path.append('{{{}}}'.format(p['name']))
+                    _str_path.append('__{}__'.format(p['name']))
             for method in methods:
                 operation_id = '{}.{}.{}.{}'.format(method,
                                                     func.__module__,
@@ -108,11 +114,27 @@ class SDK(object):
                 self._operation_handlers[operation_id] = func
                 if public is True:
                     self._set_access_policy_for_public_op(operation_id)
+                elif access_policy is not None:
+                    self._set_operation_access_policy(operation_id, access_policy)
             return func
         return wrap
 
     def get_operation_handler(self, operation_id):
         return self._operation_handlers.get(operation_id)
+
+    def _set_operation_access_policy(self, operation_id, access_policy):
+        if 'AccessPolicy' not in self._resources:
+            self._resources['AccessPolicy'] = {}
+        self._resources['AccessPolicy'][operation_id] = {
+            'link': [
+                {
+                    'id': operation_id,
+                    'resourceType': 'Operation'
+                }
+            ],
+            'engine': access_policy['engine'],
+            'schema': access_policy['schema']
+        }
 
     def _set_access_policy_for_public_op(self, operation_id):
         if 'AccessPolicy' not in self._resources:
