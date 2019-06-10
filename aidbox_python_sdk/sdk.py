@@ -43,7 +43,11 @@ class SDK(object):
         self.client = AidboxClient('{}'.format(config['box']['base-url']),
                                    authorization=basic_auth.encode())
         await self._create_seed_resources()
+        await self.db.create_all_mappings()
+
         self._initialized = True
+        logger.info('Aidbox app successfully initialized')
+
         if callable(self._on_ready):
             await self._on_ready()
 

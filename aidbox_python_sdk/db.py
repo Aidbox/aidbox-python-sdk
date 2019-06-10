@@ -6,6 +6,9 @@ from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY, dialect as postgresql_dialect
 from sqlalchemy.ext.declarative import declarative_base
 
+from .exceptions import AidboxDBException
+
+
 Base = declarative_base()
 metadata = Base.metadata
 logger = logging.getLogger('aidbox_sdk.db')
@@ -19,7 +22,9 @@ class _JSONB(TypeDecorator):
             return '\'{}\''.format(json.dumps(value))
         elif isinstance(value, str):
             return value
-        raise ValueError('Don\'t know how to literal-quote value of type {}'.format(type(value)))
+        raise ValueError(
+            'Don\'t know how to literal-quote '
+            'value of type {}'.format(type(value)))
 
 
 class _ARRAY(TypeDecorator):
@@ -40,7 +45,8 @@ class BaseAidboxMapping(Base):
     txid = Column(BigInteger, nullable=False)
     ts = Column(DateTime(True), server_default=text("CURRENT_TIMESTAMP"))
     resource_type = Column(Text, server_default=text("'App'::text"))
-    status = Column(Enum('created', 'updated', 'deleted', 'recreated', name='resource_status'), nullable=False)
+    status = Column(Enum('created', 'updated', 'deleted', 'recreated',
+                         name='resource_status'), nullable=False)
     resource = Column(_JSONB(astext_type=Text()), nullable=False, index=True)
 
 
@@ -55,10 +61,20 @@ class DBProxy(object):
         self._client = client
 
     async def raw_sql(self, sql_query, *, execute=False):
+        """
+        Executes SQL query and returns result. Specify `execute` to True
+        if you want to execute `sql_query` that doesn't return result
+        (for example, UPDATE without returning or CREATE INDEX and etc.)
+        otherwise you'll get an AidboxDBException
+        """
         if not self._client:
             raise ValueError('Client not set')
         if not isinstance(sql_query, str):
             ValueError('sql_query must be a str')
+        if not execute and sql_query.count(';') > 1:
+            logger.warning(
+                'Check that your query does not '
+                'contain two queries separated by `;`')
         query_url = '{}/$psql'.format(self._devbox_url)
         async with self._client.post(
                 query_url,
@@ -67,7 +83,11 @@ class DBProxy(object):
                 raise_for_status=True
         ) as resp:
             logger.debug('$psql answer {0}'.format(await resp.text()))
-            return await resp.json()
+            results = await resp.json()
+
+            if results[0]['status'] == 'error':
+                raise AidboxDBException(results[0])
+            return results[0].get('result', None)
 
     async def compile_statement(self, statement):
         return str(statement.compile(
@@ -100,3 +120,34 @@ class DBProxy(object):
         for t in tables:
             setattr(self, t, self._create_table_mapping(t.lower()))
         logger.debug('{} table mappings were created'.format(len(tables)))
+
+
+def row_to_resource(row):
+    """
+    Transforms raw row from resource's table to resource representation
+    >>> import pprint
+    >>> pprint.pprint(row_to_resource({
+    ...     'resource': {'name': []},
+    ...     'ts': 'ts',
+    ...     'txid': 'txid',
+    ...     'resource_type': 'Patient',
+    ...     'meta': {'tag': 'created'},
+    ...     'id': 'id',
+    ... }))
+    {'id': 'id',
+     'meta': {'lastUpdated': 'ts', 'versionId': 'txid'},
+     'name': [],
+     'resourceType': 'Patient'}
+    """
+    resource = row['resource']
+    meta = row['resource'].get('meta', {})
+    meta.update({
+        'lastUpdated': row['ts'],
+        'versionId': str(row['txid']),
+    })
+    resource.update({
+        'resourceType': row['resource_type'],
+        'id': row['id'],
+        'meta': meta,
+    })
+    return resource

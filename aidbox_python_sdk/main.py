@@ -28,15 +28,13 @@ async def init_aidbox(app):
                 json=json
         ) as resp:
             if 200 <= resp.status < 300:
-                logger.info('Aidbox app successfully initialized')
+                logger.info('Initializing Aidbox app...')
             else:
                 logger.error(
                     'Aidbox app initialized failed. '
                     'Response from Aidbox: {0} {1}'.format(
                         resp.status, await resp.text()))
                 sys.exit(errno.EINTR)
-
-        await app['sdk'].db.create_all_mappings()
     except (client_exceptions.ServerDisconnectedError,
             client_exceptions.ClientConnectionError):
         logger.error('Aidbox address is unreachable {}'.format(
