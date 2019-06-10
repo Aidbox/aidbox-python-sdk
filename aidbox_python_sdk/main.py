@@ -49,7 +49,7 @@ async def wait_and_init_aidbox(app):
     logger.debug("Check availability of {}".format(address))
     while 1:
         try:
-            async with app['client'].get(address):
+            async with app['client'].get(address, timeout=5):
                 pass
             break
         except (client_exceptions.InvalidURL,

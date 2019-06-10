@@ -32,6 +32,7 @@ class SDK(object):
         self._seeds = seeds or {}
         self._on_ready = on_ready
         self._app_endpoint_name = '{}-endpoint'.format(settings.APP_ID)
+        self._initialized = False
         self.client = None
         self.db = DBProxy(self._settings)
 
@@ -42,8 +43,12 @@ class SDK(object):
         self.client = AidboxClient('{}'.format(config['box']['base-url']),
                                    authorization=basic_auth.encode())
         await self._create_seed_resources()
+        self._initialized = True
         if callable(self._on_ready):
             await self._on_ready()
+
+    def is_initialized(self):
+        return self._initialized
 
     async def _create_seed_resources(self):
         for entity, resources in self._seeds.items():

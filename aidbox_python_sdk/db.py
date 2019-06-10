@@ -54,7 +54,7 @@ class DBProxy(object):
     def set_client(self, client):
         self._client = client
 
-    async def raw_sql(self, sql_query, execute=False):
+    async def raw_sql(self, sql_query, *, execute=False):
         if not self._client:
             raise ValueError('Client not set')
         if not isinstance(sql_query, str):
@@ -74,12 +74,12 @@ class DBProxy(object):
             dialect=postgresql_dialect(),
             compile_kwargs={"literal_binds": True}))
 
-    async def alchemy(self, statement):
+    async def alchemy(self, statement, *, execute=False):
         if not isinstance(statement, ClauseElement):
             ValueError('statement must be a sqlalchemy expression')
         query = await self.compile_statement(statement)
         logger.debug('Built query:\n%s', query)
-        return await self.raw_sql(query)
+        return await self.raw_sql(query, execute=execute)
 
     async def _get_all_entities_name(self):
         query_url = '{}/Entity?type=resource&_elements=id&_count=10000'.format(
