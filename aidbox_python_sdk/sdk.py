@@ -1,7 +1,7 @@
 import logging
 from aidboxpy import AidboxClient
 from base_fhirpy.exceptions import ResourceNotFound
-from aiohttp import BasicAuth
+from aiohttp import BasicAuth, ClientSession
 from .db import DBProxy
 
 logger = logging.getLogger('aidbox_sdk')
@@ -37,9 +37,10 @@ class SDK(object):
         self.db = DBProxy(self._settings)
 
     async def initialize(self, config):
-        await self._init_client(config)
+        await self._init_aidbox_client(config)
         await self._create_seed_resources()
-        await self.db.create_all_mappings()
+        await self.db.initialize(config)
+
         self._initialized = True
         logger.info('Aidbox app successfully initialized')
 
@@ -49,7 +50,7 @@ class SDK(object):
     def is_initialized(self):
         return self._initialized
 
-    async def _init_client(self, config):
+    async def _init_aidbox_client(self, config):
         basic_auth = BasicAuth(
             login=config['client']['id'],
             password=config['client']['secret'])

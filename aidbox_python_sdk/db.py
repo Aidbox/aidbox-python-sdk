@@ -1,5 +1,7 @@
 import logging
 import json
+
+from aiohttp import BasicAuth, ClientSession
 from sqlalchemy import (BigInteger, Column, DateTime, Enum,
     Text, text, TypeDecorator)
 from sqlalchemy.sql.elements import ClauseElement
@@ -57,8 +59,12 @@ class DBProxy(object):
     def __init__(self, settings):
         self._devbox_url = settings.APP_INIT_URL
 
-    def set_client(self, client):
-        self._client = client
+    async def initialize(self, config):
+        basic_auth = BasicAuth(
+            login=config['client']['id'],
+            password=config['client']['secret'])
+        self._client = ClientSession(auth=basic_auth)
+        await self.create_all_mappings()
 
     async def raw_sql(self, sql_query, *, execute=False):
         """
