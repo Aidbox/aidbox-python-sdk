@@ -47,6 +47,10 @@ class SDK(object):
         if callable(self._on_ready):
             await self._on_ready()
 
+    async def deinitialize(self):
+        await self.db.deinitialize()
+        self._initialized = False
+
     def is_initialized(self):
         return self._initialized
 

@@ -67,6 +67,7 @@ async def on_startup(app):
 
 async def on_cleanup(app):
     await app['init_http_client'].close()
+    await app['sdk'].deinitialize()
 
 
 async def on_shutdown(app):

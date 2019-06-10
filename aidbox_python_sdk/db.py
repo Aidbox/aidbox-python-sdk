@@ -66,6 +66,9 @@ class DBProxy(object):
         self._client = ClientSession(auth=basic_auth)
         await self.create_all_mappings()
 
+    async def deinitialize(self):
+        await self._client.close()
+
     async def raw_sql(self, sql_query, *, execute=False):
         """
         Executes SQL query and returns result. Specify `execute` to True
