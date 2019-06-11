@@ -85,7 +85,4 @@ async def dispatch(request):
 
 @routes.get('/')
 async def health_check(request):
-    if not request.app['sdk'].is_initialized():
-        raise web.HTTPServiceUnavailable()
-
     return web.json_response({'status': 'OK'}, status=200)
