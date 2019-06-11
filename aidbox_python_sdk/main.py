@@ -52,7 +52,8 @@ async def wait_and_init_aidbox(app):
             async with app['client'].get(address, timeout=5):
                 pass
             break
-        except (client_exceptions.InvalidURL,
+        except (asyncio.TimeoutError,
+                client_exceptions.InvalidURL,
                 client_exceptions.ClientConnectionError):
             await asyncio.sleep(2)
     await init_aidbox(app)
