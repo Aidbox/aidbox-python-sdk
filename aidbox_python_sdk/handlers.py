@@ -86,3 +86,11 @@ async def dispatch(request):
 @routes.get('/')
 async def health_check(request):
     return web.json_response({'status': 'OK'}, status=200)
+
+
+@routes.get('/live')
+async def live_health_check(request):
+    if not request.app['sdk'].is_initialized():
+        raise web.HTTPServiceUnavailable()
+    return web.json_response({'status': 'OK'}, status=200)
+
