@@ -98,7 +98,7 @@ class DBProxy(object):
                 raise AidboxDBException(results[0])
             return results[0].get('result', None)
 
-    async def compile_statement(self, statement):
+    def compile_statement(self, statement):
         return str(statement.compile(
             dialect=postgresql_dialect(),
             compile_kwargs={"literal_binds": True}))
@@ -106,7 +106,7 @@ class DBProxy(object):
     async def alchemy(self, statement, *, execute=False):
         if not isinstance(statement, ClauseElement):
             ValueError('statement must be a sqlalchemy expression')
-        query = await self.compile_statement(statement)
+        query = self.compile_statement(statement)
         logger.debug('Built query:\n%s', query)
         return await self.raw_sql(query, execute=execute)
 
