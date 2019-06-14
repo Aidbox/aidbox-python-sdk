@@ -45,7 +45,9 @@ class SDK(object):
         await self._create_seed_resources()
         self._initialized = True
         if callable(self._on_ready):
-            await self._on_ready()
+            result = self._on_ready()
+            if asyncio.iscoroutine(result):
+                    await self._on_ready()
 
     def is_initialized(self):
         return self._initialized
