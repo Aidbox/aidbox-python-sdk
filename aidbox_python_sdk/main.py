@@ -21,6 +21,7 @@ async def init_aidbox(app):
     try:
         json = {
             'url': app['settings'].APP_URL,
+            'app_id': app['settings'].APP_ID,
             'secret': app['settings'].APP_INIT_CLIENT_SECRET,
         }
         async with app['client'].post(
