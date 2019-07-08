@@ -86,7 +86,7 @@ async def appointment_sub(event):
     """
     participants = event['resource']['participant']
     patient_id = next(p['actor']['id'] for p in participants if p['actor']['resourceType'] == 'Patient')
-    patient = sdk.client.resources('Patient').get(id=patient_id)
+    patient = await sdk.client.resources('Patient').get(id=patient_id)
     patient_name = '{} {}'.format(patient['name'][0]['given'][0], patient['name'][0]['family'])
     appointment_dates = 'Start: {:%Y-%m-%d %H:%M}, end: {:%Y-%m-%d %H:%M}'.format(
         datetime.fromisoformat(event['resource']['start']),
@@ -125,6 +125,9 @@ async def daily_patient_report(operation, request):
     GET /Patient/$weekly-report
     GET /Patient/$daily-report
     """
+    patients = sdk.client.resources('Patient')
+    async for p in patients:
+        logging.debug(p.serialize())
     logging.debug('`daily_patient_report` operation handler')
     logging.debug('Operation data: %s', operation)
     logging.debug('Request: %s', request)

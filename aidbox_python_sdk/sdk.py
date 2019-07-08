@@ -1,7 +1,7 @@
 import logging
 import asyncio
-from aidboxpy import AidboxClient
-from base_fhirpy.exceptions import ResourceNotFound
+from aidboxpy import AsyncAidboxClient
+from fhirpy.base.exceptions import ResourceNotFound
 from aiohttp import BasicAuth
 from .db import DBProxy
 
@@ -41,14 +41,14 @@ class SDK(object):
         basic_auth = BasicAuth(
             login=config['client']['id'],
             password=config['client']['secret'])
-        self.client = AidboxClient('{}'.format(config['box']['base-url']),
-                                   authorization=basic_auth.encode())
+        self.client = AsyncAidboxClient('{}'.format(config['box']['base-url']),
+            authorization=basic_auth.encode())
         await self._create_seed_resources()
         self._initialized = True
         if callable(self._on_ready):
             result = self._on_ready()
             if asyncio.iscoroutine(result):
-                    await self._on_ready()
+                await self._on_ready()
 
     def is_initialized(self):
         return self._initialized
@@ -57,14 +57,14 @@ class SDK(object):
         for entity, resources in self._seeds.items():
             for resource_id, resource in resources.items():
                 try:
-                    self.client.resources(entity).get(id=resource_id)
+                    await self.client.resources(entity).get(id=resource_id)
                 except ResourceNotFound:
                     seed_resource = self.client.resource(
                         entity,
                         id=resource_id,
                         **resource
                     )
-                    seed_resource.save()
+                    await seed_resource.save()
                     logger.debug('Created resource "%s" with id "%s"', entity, resource_id)
                 else:
                     logger.debug('Resource "%s" with id "%s" already exists', entity, resource_id)

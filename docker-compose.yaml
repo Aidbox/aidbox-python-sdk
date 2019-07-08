@@ -1,8 +1,7 @@
 version: '3.1'
 services:
   devbox:
-    image: "healthsamurai/devbox:canary"
-    command: ["wait-for-it.sh", "database:5432", "--strict", "--timeout=0", "--", "java", "-jar", "/app.jar"]
+    image: "healthsamurai/devbox:0.4.4"
     depends_on:
       - devbox-db
     links:
@@ -31,8 +30,8 @@ services:
       POSTGRES_DB:       devbox
   app:
     build: ./
-    command: ["adev", "runserver"]
-#    command: ["wait-for-it.sh", "devbox:8080", "--strict", "--timeout=0", "--", "adev", "runserver"]
+    # command: ["adev", "runserver"]
+    command: ["wait-for-it.sh", "devbox:8080", "--strict", "--timeout=0", "--", "adev", "runserver"]
     depends_on:
      - devbox
     links:
