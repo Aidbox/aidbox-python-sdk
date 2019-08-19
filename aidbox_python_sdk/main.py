@@ -24,20 +24,18 @@ async def init_aidbox(app):
             'app_id': app['settings'].APP_ID,
             'secret': app['settings'].APP_INIT_CLIENT_SECRET,
         }
-        async with app['client'].post(
+        async with app['init_http_client'].post(
                 '{}/App/$init'.format(app['settings'].APP_INIT_URL),
                 json=json
         ) as resp:
             if 200 <= resp.status < 300:
-                logger.info('Aidbox app successfully initialized')
+                logger.info('Initializing Aidbox app...')
             else:
                 logger.error(
                     'Aidbox app initialized failed. '
                     'Response from Aidbox: {0} {1}'.format(
                         resp.status, await resp.text()))
                 sys.exit(errno.EINTR)
-
-        await app['sdk'].db.create_all_mappings()
     except (client_exceptions.ServerDisconnectedError,
             client_exceptions.ClientConnectionError):
         logger.error('Aidbox address is unreachable {}'.format(
@@ -50,7 +48,7 @@ async def wait_and_init_aidbox(app):
     logger.debug("Check availability of {}".format(address))
     while 1:
         try:
-            async with app['client'].get(address, timeout=5):
+            async with app['init_http_client'].get(address, timeout=5):
                 pass
             break
         except (asyncio.TimeoutError,
@@ -64,19 +62,19 @@ async def on_startup(app):
     basic_auth = BasicAuth(
         login=app['settings'].APP_INIT_CLIENT_ID,
         password=app['settings'].APP_INIT_CLIENT_SECRET)
-    app['client'] = ClientSession(auth=basic_auth)
+    app['init_http_client'] = ClientSession(auth=basic_auth)
 
-    app['sdk'].db.set_client(app['client'])
     asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
 
 
 async def on_cleanup(app):
-    await app['client'].close()
+    await app['init_http_client'].close()
+    await app['sdk'].deinitialize()
 
 
 async def on_shutdown(app):
-    if not app['client'].closed:
-        await app['client'].close()
+    if not app['init_http_client'].closed:
+        await app['init_http_client'].close()
 
 
 async def create_app(settings, sdk, debug=False):

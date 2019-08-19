@@ -1,8 +1,7 @@
 import logging
-import asyncio
 from aidboxpy import AsyncAidboxClient
 from fhirpy.base.exceptions import ResourceNotFound
-from aiohttp import BasicAuth
+from aiohttp import BasicAuth, ClientSession
 from .db import DBProxy
 
 logger = logging.getLogger('aidbox_sdk')
@@ -37,21 +36,30 @@ class SDK(object):
         self.client = None
         self.db = DBProxy(self._settings)
 
-    async def init_client(self, config):
+    async def initialize(self, config):
+        await self._init_aidbox_client(config)
+        await self._create_seed_resources()
+        await self.db.initialize(config)
+
+        self._initialized = True
+        logger.info('Aidbox app successfully initialized')
+
+        if callable(self._on_ready):
+            await self._on_ready()
+
+    async def deinitialize(self):
+        await self.db.deinitialize()
+        self._initialized = False
+
+    def is_initialized(self):
+        return self._initialized
+
+    async def _init_aidbox_client(self, config):
         basic_auth = BasicAuth(
             login=config['client']['id'],
             password=config['client']['secret'])
         self.client = AsyncAidboxClient('{}'.format(config['box']['base-url']),
-            authorization=basic_auth.encode())
-        await self._create_seed_resources()
-        self._initialized = True
-        if callable(self._on_ready):
-            result = self._on_ready()
-            if asyncio.iscoroutine(result):
-                await self._on_ready()
-
-    def is_initialized(self):
-        return self._initialized
+                                        authorization=basic_auth.encode())
 
     async def _create_seed_resources(self):
         for entity, resources in self._seeds.items():
