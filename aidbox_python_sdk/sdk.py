@@ -10,7 +10,7 @@ logger = logging.getLogger('aidbox_sdk')
 class SDK(object):
 
     def __init__(self, settings, *, entities=None, resources=None, seeds=None,
-                 on_ready=None):
+                 on_ready=None, on_deinitialize=None):
         self._settings = settings
         self._subscriptions = {}
         self._subscription_handlers = {}
@@ -31,6 +31,7 @@ class SDK(object):
         self._entities = entities or {}
         self._seeds = seeds or {}
         self._on_ready = on_ready
+        self._on_deinitialize = on_deinitialize
         self._app_endpoint_name = '{}-endpoint'.format(settings.APP_ID)
         self._initialized = False
         self.client = None
@@ -50,6 +51,9 @@ class SDK(object):
     async def deinitialize(self):
         await self.db.deinitialize()
         self._initialized = False
+
+        if callable(self._on_deinitialize):
+            await self._on_deinitialize()
 
     def is_initialized(self):
         return self._initialized
