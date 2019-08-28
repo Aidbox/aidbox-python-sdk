@@ -1,5 +1,6 @@
 import logging
 import asyncio
+import os
 from aiohttp import web
 
 logger = logging.getLogger('aidbox_sdk')
@@ -46,6 +47,9 @@ async def operation(request, data):
 
 
 async def config(request, config):
+    app_override_aidbox_base_url = os.environ.get('APP_OVERRIDE_AIDBOX_BASE_URL')
+    if app_override_aidbox_base_url:
+        config['box']['base-url'] = app_override_aidbox_base_url
     await request.app['sdk'].initialize(config)
     return web.json_response({})
 
