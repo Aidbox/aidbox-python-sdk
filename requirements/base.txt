@@ -1,5 +1,6 @@
-uvloop==0.12.0
-aiohttp==3.4.4
-SQLAlchemy==1.2.18
-git+git://github.com/beda-software/aidbox-py.git@69536bfc2ad0049e7630d379087d3adc1d992b59
+uvloop==0.13.0
+aiohttp==3.5.4
+SQLAlchemy==1.3.8
+git+git://github.com/beda-software/fhir-py.git@async
+git+git://github.com/beda-software/aidbox-py.git@async
 coloredlogs
