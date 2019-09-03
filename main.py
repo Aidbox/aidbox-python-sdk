@@ -84,6 +84,10 @@ async def appointment_sub(event):
     """
     POST /Appointment
     """
+    return await _appointment_sub(event)
+
+   
+async def _appointment_sub(event):
     participants = event['resource']['participant']
     patient_id = next(p['actor']['id'] for p in participants if p['actor']['resourceType'] == 'Patient')
     patient = await sdk.client.resources('Patient').get(id=patient_id)
