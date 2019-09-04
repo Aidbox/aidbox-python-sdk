@@ -126,8 +126,13 @@ class DBProxy(object):
 
     async def create_all_mappings(self):
         tables = await self._get_all_entities_name()
+
         for t in tables:
             setattr(self, t, self._create_table_mapping(t.lower()))
+
+        for t in tables:
+            setattr(self, '{}History'.format(t), self._create_table_mapping('{}_history'.format(t.lower())))
+
         logger.debug('{} table mappings were created'.format(len(tables)))
 
 
