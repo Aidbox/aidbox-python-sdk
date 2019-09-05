@@ -2,6 +2,7 @@ import sqlalchemy as sa
 import logging
 import coloredlogs
 import time
+import asyncio
 from aiohttp import web
 from datetime import datetime
 from sqlalchemy.sql.expression import select, insert
@@ -75,8 +76,8 @@ seeds = {
 sdk = SDK(settings, resources=resources, seeds=seeds)
 
 
-async def create_app():
-    return await _create_app(settings, sdk, debug=True)
+def create_app():
+    return _create_app(settings, sdk, debug=True)
 
 
 @sdk.subscription('Appointment')
@@ -84,6 +85,7 @@ async def appointment_sub(event):
     """
     POST /Appointment
     """
+    await asyncio.sleep(5)
     return await _appointment_sub(event)
 
    

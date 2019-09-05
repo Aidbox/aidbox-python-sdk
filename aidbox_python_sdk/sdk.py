@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from aidboxpy import AsyncAidboxClient
 from fhirpy.base.exceptions import ResourceNotFound
@@ -34,6 +35,8 @@ class SDK(object):
         self._on_deinitialize = on_deinitialize
         self._app_endpoint_name = '{}-endpoint'.format(settings.APP_ID)
         self._initialized = False
+        self._sub_triggered = {}
+        self.is_ready = asyncio.Future()
         self.client = None
         self.db = DBProxy(self._settings)
 
@@ -44,9 +47,11 @@ class SDK(object):
 
         self._initialized = True
         logger.info('Aidbox app successfully initialized')
-
+        
         if callable(self._on_ready):
             await self._on_ready()
+
+        self.is_ready.set_result(True)
 
     async def deinitialize(self):
         await self.db.deinitialize()
@@ -96,12 +101,24 @@ class SDK(object):
         def wrap(func):
             path = func.__name__
             self._subscriptions[entity] = {'handler': path}
-            self._subscription_handlers[path] = func
+
+            async def func_triggered(*args, **kwargs):
+                result = func(*args, **kwargs)
+                if asyncio.iscoroutine(result):
+                    result = await result
+                self._sub_triggered[entity].set_result(True)
+                return result
+
+            self._subscription_handlers[path] = func_triggered
             return func
         return wrap
 
     def get_subscription_handler(self, path):
         return self._subscription_handlers.get(path)
+    
+    def was_subscription_triggered(self, entity):
+        self._sub_triggered[entity] = asyncio.Future()
+        return self._sub_triggered[entity]
 
     def operation(self, methods, path, public=False, access_policy=None):
         if public == True and access_policy is not None:

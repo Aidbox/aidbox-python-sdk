@@ -37,7 +37,6 @@ def aiohttp_client(loop):  # type: ignore
 
         await client.start_server()
         clients.append(client)
-        await asyncio.sleep(5)
         return client
 
     yield go
@@ -50,10 +49,16 @@ def aiohttp_client(loop):  # type: ignore
     loop.run_until_complete(finalize())
 
 
+async def start_app(aiohttp_client):
+    app = await aiohttp_client(_create_app(), server_kwargs={"port": 8081})
+    await app.server.app['sdk'].is_ready
+    return app
+
+
 @pytest.fixture(scope="session")
 def cli(loop, aiohttp_client):
     return loop.run_until_complete(
-        aiohttp_client(_create_app(), server_kwargs={"port": 8081})
+        start_app(aiohttp_client)
     )
 
 
@@ -67,4 +72,3 @@ async def aidbox_client(cli):
     session = ClientSession(auth=basic_auth)
     yield session
     await session.close()
-
