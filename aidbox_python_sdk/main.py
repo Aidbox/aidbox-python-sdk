@@ -44,7 +44,7 @@ async def init_aidbox(app):
 
 
 async def wait_and_init_aidbox(app):
-    address = 'http://localhost:8081'
+    address = app['settings'].APP_URL
     logger.debug("Check availability of {}".format(address))
     while 1:
         try:
@@ -78,7 +78,7 @@ async def on_shutdown(app):
 
 
 def create_app(settings, sdk, debug=False):
-    app = web.Application(debug=debug)
+    app = web.Application()
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)
     app.on_shutdown.append(on_shutdown)
