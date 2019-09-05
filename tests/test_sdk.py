@@ -7,22 +7,22 @@ from unittest import mock
 import main
 
 
-async def test_health_check(cli):
-    resp = await cli.get('/')
+async def test_health_check(client):
+    resp = await client.get('/')
     assert resp.status == 200
     json = await resp.json()
     assert json == {"status": "OK"}
     
     
-async def test_live_health_check(cli):
-    resp = await cli.get('/live')
+async def test_live_health_check(client):
+    resp = await client.get('/live')
     assert resp.status == 200
     json = await resp.json()
     assert json == {"status": "OK"}
 
 
-async def test_signup_reg_op(cli, aidbox_client):
-    resp = await aidbox_client.post(
+async def test_signup_reg_op(client, aidbox):
+    resp = await aidbox.post(
         "http://localhost:8080/signup/register/21.02.19/testvalue"
     )
     assert resp.status == 200
@@ -33,14 +33,14 @@ async def test_signup_reg_op(cli, aidbox_client):
     }
 
 
-async def test_appointment_sub(cli, aidbox_client):
+async def test_appointment_sub(client, aidbox):
     with mock.patch.object(main, "_appointment_sub") as appointment_sub:
         f = asyncio.Future()
         f.set_result("")
         appointment_sub.return_value = f
-        sdk = cli.server.app['sdk']
+        sdk = client.server.app['sdk']
         was_appointment_sub_triggered = sdk.was_subscription_triggered('Appointment')
-        resp = await aidbox_client.post(
+        resp = await aidbox.post(
             "http://localhost:8080/Appointment",
             json={
                 "status": "proposed",

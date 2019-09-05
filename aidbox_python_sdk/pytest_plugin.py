@@ -56,15 +56,17 @@ async def start_app(aiohttp_client):
 
 
 @pytest.fixture(scope="session")
-def cli(loop, aiohttp_client):
+def client(loop, aiohttp_client):
+    """Instance of app's server and client"""
     return loop.run_until_complete(
         start_app(aiohttp_client)
     )
 
 
 @pytest.yield_fixture()
-async def aidbox_client(cli):
-    app = cli.server.app
+async def aidbox(client):
+    """HTTP client for making requests to Aidbox"""
+    app = client.server.app
     basic_auth = BasicAuth(
         login=app["settings"].APP_INIT_CLIENT_ID,
         password=app["settings"].APP_INIT_CLIENT_SECRET,
