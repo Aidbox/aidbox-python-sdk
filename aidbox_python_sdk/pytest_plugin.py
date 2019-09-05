@@ -65,76 +65,20 @@ def client(loop, aiohttp_client):
     )
 
 
-class CustomClient:
+class CustomSession(ClientSession):
     def __init__(self,
+                 *args,
                  base_url='http://127.0.0.1:8080',
-                 loop=None,
-                 **session_kwargs):
+                 **kwargs):
         self.base_url = URL(base_url)
-        self._session = ClientSession(loop=loop,
-                                      **session_kwargs)
-        self._closed = False
-        self._responses = []
-
-    @property
-    def session(self):
-        return self._session
+        super().__init__(*args, **kwargs)
     
     def make_url(self, path):
         return self.base_url.with_path(path)
-
-    async def request(self,
-                method,
-                path,
-                **kwargs):
-        resp = await self._session.request(
-            method, self.make_url(path), **kwargs
-        )
-        # save it to close later
-        self._responses.append(resp)
-        return resp
-
-    def get(self, path, **kwargs):
-        return _RequestContextManager(
-            self.request(hdrs.METH_GET, path, **kwargs)
-        )
-
-    def post(self, path, **kwargs):
-        return _RequestContextManager(
-            self.request(hdrs.METH_POST, path, **kwargs)
-        )
-
-    def options(self, path, **kwargs):
-        return _RequestContextManager(
-            self.request(hdrs.METH_OPTIONS, path, **kwargs)
-        )
-
-    def head(self, path, **kwargs):
-        return _RequestContextManager(
-            self.request(hdrs.METH_HEAD, path, **kwargs)
-        )
-
-    def put(self, path, **kwargs):
-        return _RequestContextManager(
-            self.request(hdrs.METH_PUT, path, **kwargs)
-        )
-
-    def patch(self, path, **kwargs):
-        return _RequestContextManager(
-            self.request(hdrs.METH_PATCH, path, **kwargs)
-        )
-
-    def delete(self, path, **kwargs):
-        return _RequestContextManager(
-            self.request(hdrs.METH_DELETE, path, **kwargs)
-        )
         
-    async def close(self) -> None:
-        if not self._closed:
-            for resp in self._responses:
-                resp.close()
-            await self._session.close()
-            self._closed = True
+    async def _request(self, method, path, *args, **kwargs):
+        url = self.make_url(path)
+        return await super()._request(method, url, *args, **kwargs)
 
 
 @pytest.yield_fixture()
@@ -146,6 +90,6 @@ async def aidbox(client):
         password=app["settings"].APP_INIT_CLIENT_SECRET,
     )
     base_url = os.environ.get('AIDBOX_BASE_URL')
-    session = CustomClient(base_url=base_url, **{'auth': basic_auth})
+    session = CustomSession(base_url=base_url, auth=basic_auth)
     yield session
     await session.close()
