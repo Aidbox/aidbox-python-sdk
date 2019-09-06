@@ -51,7 +51,7 @@ def aiohttp_client(loop):  # type: ignore
 
 
 async def start_app(aiohttp_client):
-    app = await aiohttp_client(_create_app(),
+    app = await aiohttp_client(await _create_app(),
                                server_kwargs={"host": "0.0.0.0", "port": 8081})
     await app.server.app['sdk'].is_ready
     return app
