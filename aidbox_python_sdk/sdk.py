@@ -106,7 +106,8 @@ class SDK(object):
                 result = func(*args, **kwargs)
                 if asyncio.iscoroutine(result):
                     result = await result
-                self._sub_triggered[entity].set_result(True)
+                if entity in self._sub_triggered:
+                    self._sub_triggered[entity].set_result(True)
                 return result
 
             self._subscription_handlers[path] = func_triggered
