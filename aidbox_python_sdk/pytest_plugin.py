@@ -65,12 +65,12 @@ def client(loop, aiohttp_client):
     )
 
 
-class CustomSession(ClientSession):
+class AidboxSession(ClientSession):
     def __init__(self,
                  *args,
-                 base_url='http://127.0.0.1:8080',
+                 base_url=None,
                  **kwargs):
-        self.base_url = URL(base_url)
+        self.base_url = URL(base_url or os.environ.get('AIDBOX_BASE_URL'))
         super().__init__(*args, **kwargs)
     
     def make_url(self, path):
@@ -89,7 +89,6 @@ async def aidbox(client):
         login=app["settings"].APP_INIT_CLIENT_ID,
         password=app["settings"].APP_INIT_CLIENT_SECRET,
     )
-    base_url = os.environ.get('AIDBOX_BASE_URL')
-    session = CustomSession(base_url=base_url, auth=basic_auth)
+    session = AidboxSession(auth=basic_auth)
     yield session
     await session.close()
