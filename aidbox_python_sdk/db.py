@@ -21,7 +21,7 @@ class _JSONB(TypeDecorator):
 
     def process_literal_param(self, value, dialect):
         if isinstance(value, dict):
-            return '\'{}\''.format(json.dumps(value))
+            return '\'{}\''.format(json.dumps(value).replace("'", "''"))
         elif isinstance(value, str):
             return value
         raise ValueError(
