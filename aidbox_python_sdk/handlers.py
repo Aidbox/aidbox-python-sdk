@@ -17,11 +17,15 @@ async def subscription(request, data):
     if not request.app['sdk'].is_initialized():
         raise web.HTTPServiceUnavailable()
     if 'handler' not in data or 'event' not in data:
-        logger.error('`handler` and/or `event` param is missing, data: {}'.format(data))
+        logger.error(
+            '`handler` and/or `event` param is missing, data: {}'.format(data)
+        )
         raise web.HTTPBadRequest()
     handler = request.app['sdk'].get_subscription_handler(data['handler'])
     if not handler:
-        logger.error('Subscription handler `{}` was not found'.format(data['handler']))
+        logger.error(
+            'Subscription handler `{}` was not found'.format(data['handler'])
+        )
         raise web.HTTPNotFound()
     result = handler(data['event'])
     if asyncio.iscoroutine(result):
@@ -34,11 +38,16 @@ async def operation(request, data):
     if not request.app['sdk'].is_initialized():
         raise web.HTTPServiceUnavailable()
     if 'operation' not in data or 'id' not in data['operation']:
-        logger.error('`operation` or `operation[id]` param is missing, data: {}'.format(data))
+        logger.error(
+            '`operation` or `operation[id]` param is missing, data: {}'.
+            format(data)
+        )
         raise web.HTTPBadRequest()
     handler = request.app['sdk'].get_operation_handler(data['operation']['id'])
     if not handler:
-        logger.error('Operation handler `{}` was not found'.format(data['handler']))
+        logger.error(
+            'Operation handler `{}` was not found'.format(data['handler'])
+        )
         raise web.HTTPNotFound()
     result = handler(data['operation'], data['request'])
     if asyncio.iscoroutine(result):
@@ -47,7 +56,9 @@ async def operation(request, data):
 
 
 async def config(request, config):
-    app_override_aidbox_base_url = os.environ.get('APP_OVERRIDE_AIDBOX_BASE_URL')
+    app_override_aidbox_base_url = os.environ.get(
+        'APP_OVERRIDE_AIDBOX_BASE_URL'
+    )
     if app_override_aidbox_base_url:
         config['box']['base-url'] = app_override_aidbox_base_url
     await request.app['sdk'].initialize(config)
@@ -70,8 +81,9 @@ async def init(request):
 
 @routes.post('/')
 async def dispatch(request):
-    logger.debug('Dispatch new request {} {}'.format(
-        request.method, request.url))
+    logger.debug(
+        'Dispatch new request {} {}'.format(request.method, request.url)
+    )
     json = await request.json()
     if 'type' in json and json['type'] in TYPES:
         logger.debug('Dispatch to `{}` handler'.format(json['type']))
@@ -97,4 +109,3 @@ async def live_health_check(request):
     if not request.app['sdk'].is_initialized():
         raise web.HTTPServiceUnavailable()
     return web.json_response({'status': 'OK'}, status=200)
-

@@ -66,8 +66,10 @@ class Settings:
                 # could do floats here and lists etc via json
                 setattr(self, attr_name, env_var)
             elif is_required and attr_name not in self._custom_settings:
-                raise RuntimeError('The required environment variable "{0}" is currently not set, '
-                                   'you\'ll need to run `source activate.settings.sh` '
-                                   'or you can set that single environment variable with '
-                                   '`export {0}="<value>"` or pass variable in `custom_settings` '
-                                   'argument'.format(env_var_name))
+                raise RuntimeError(
+                    'The required environment variable "{0}" is currently not set, '
+                    'you\'ll need to run `source activate.settings.sh` '
+                    'or you can set that single environment variable with '
+                    '`export {0}="<value>"` or pass variable in `custom_settings` '
+                    'argument'.format(env_var_name)
+                )

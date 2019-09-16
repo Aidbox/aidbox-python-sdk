@@ -12,8 +12,8 @@ async def test_health_check(client):
     assert resp.status == 200
     json = await resp.json()
     assert json == {"status": "OK"}
-    
-    
+
+
 async def test_live_health_check(client):
     resp = await client.get('/live')
     assert resp.status == 200
@@ -29,7 +29,10 @@ async def test_signup_reg_op(client, aidbox):
     json = await resp.json()
     assert json == {
         "success": "Ok",
-        "request": {"date": "21.02.19", "test": "testvalue"},
+        "request": {
+            "date": "21.02.19",
+            "test": "testvalue"
+        },
     }
 
 
@@ -39,12 +42,16 @@ async def test_appointment_sub(client, aidbox):
         f.set_result("")
         appointment_sub.return_value = f
         sdk = client.server.app['sdk']
-        was_appointment_sub_triggered = sdk.was_subscription_triggered('Appointment')
+        was_appointment_sub_triggered = sdk.was_subscription_triggered(
+            'Appointment'
+        )
         resp = await aidbox.post(
             "http://localhost:8080/Appointment",
             json={
                 "status": "proposed",
-                "participant": [{"status": "accepted"}],
+                "participant": [{
+                    "status": "accepted"
+                }],
                 "resourceType": "Appointment",
             },
         )
@@ -53,11 +60,14 @@ async def test_appointment_sub(client, aidbox):
         event = appointment_sub.call_args_list[0][0][0]
         logging.debug("event: %s", event)
         expected = {
-            "resource": {
-                "status": "proposed",
-                "participant": [{"status": "accepted"}],
-                "resourceType": "Appointment",
-            },
+            "resource":
+                {
+                    "status": "proposed",
+                    "participant": [{
+                        "status": "accepted"
+                    }],
+                    "resourceType": "Appointment",
+                },
             "action": "create",
         }
         assert expected["resource"].items() <= event["resource"].items()

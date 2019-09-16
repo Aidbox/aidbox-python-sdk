@@ -51,8 +51,12 @@ def aiohttp_client(loop):  # type: ignore
 
 
 async def start_app(aiohttp_client):
-    app = await aiohttp_client(await _create_app(),
-                               server_kwargs={"host": "0.0.0.0", "port": 8081})
+    app = await aiohttp_client(
+        await _create_app(), server_kwargs={
+            "host": "0.0.0.0",
+            "port": 8081
+        }
+    )
     await app.server.app['sdk'].is_ready
     return app
 
@@ -60,22 +64,17 @@ async def start_app(aiohttp_client):
 @pytest.fixture(scope="session")
 def client(loop, aiohttp_client):
     """Instance of app's server and client"""
-    return loop.run_until_complete(
-        start_app(aiohttp_client)
-    )
+    return loop.run_until_complete(start_app(aiohttp_client))
 
 
 class AidboxSession(ClientSession):
-    def __init__(self,
-                 *args,
-                 base_url=None,
-                 **kwargs):
+    def __init__(self, *args, base_url=None, **kwargs):
         self.base_url = URL(base_url or os.environ.get('AIDBOX_BASE_URL'))
         super().__init__(*args, **kwargs)
-    
+
     def make_url(self, path):
         return self.base_url.with_path(path)
-        
+
     async def _request(self, method, path, *args, **kwargs):
         url = self.make_url(path)
         return await super()._request(method, url, *args, **kwargs)
