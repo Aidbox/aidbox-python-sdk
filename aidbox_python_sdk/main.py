@@ -77,8 +77,8 @@ async def on_shutdown(app):
         await app['init_http_client'].close()
 
 
-async def create_app(settings, sdk, debug=False):
-    app = web.Application(debug=debug)
+def create_app(settings, sdk, debug=False):
+    app = web.Application()
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)
     app.on_shutdown.append(on_shutdown)
@@ -91,4 +91,3 @@ async def create_app(settings, sdk, debug=False):
     )
     setup_routes(app)
     return app
-

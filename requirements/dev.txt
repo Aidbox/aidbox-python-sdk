@@ -1,4 +1,4 @@
-# you will need to install these requirements with `pip install -r requirements.txt`
-aiohttp-devtools==0.11
-uvloop==0.12.0
-coloredlogs==10.0
+aiohttp-devtools==0.13.1
+pytest-aiohttp==0.3.0
+pytest-cov==2.7.1
+pytest==5.1.1

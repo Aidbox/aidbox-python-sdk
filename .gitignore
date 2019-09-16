@@ -1,1 +1,8 @@
+.env
+.env-*
+.idea
+pgdata
+config
 __pycache__
+venv
+.DS_Store
