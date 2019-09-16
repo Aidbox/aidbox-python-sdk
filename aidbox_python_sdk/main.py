@@ -77,7 +77,7 @@ async def on_shutdown(app):
         await app['init_http_client'].close()
 
 
-def create_app(settings, sdk, debug=False):
+async def create_app(settings, sdk, debug=False):
     app = web.Application()
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)
