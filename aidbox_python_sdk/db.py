@@ -16,6 +16,12 @@ metadata = Base.metadata
 logger = logging.getLogger('aidbox_sdk.db')
 
 
+class AidboxPostgresqlDialect(postgresql_dialect):
+    # We don't need escaping at this level
+    # All escaping will be done on the aidbox side
+    _backslash_escapes = False
+
+
 class _JSONB(TypeDecorator):
     impl = JSONB
 
@@ -113,16 +119,12 @@ class DBProxy(object):
             return results[0].get('result', None)
 
     def compile_statement(self, statement):
-        compiled = str(
+        return str(
             statement.compile(
-                dialect=postgresql_dialect(),
+                dialect=AidboxPostgresqlDialect(),
                 compile_kwargs={"literal_binds": True}
             )
         )
-
-        # We don't need postgres dialect's escaping at this level
-        # All escaping will be done on the aidbox side
-        return compiled.replace('\\\\', '\\')
 
     async def alchemy(self, statement, *, execute=False):
         if not isinstance(statement, ClauseElement):
