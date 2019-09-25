@@ -113,12 +113,16 @@ class DBProxy(object):
             return results[0].get('result', None)
 
     def compile_statement(self, statement):
-        return str(
+        compiled = str(
             statement.compile(
                 dialect=postgresql_dialect(),
                 compile_kwargs={"literal_binds": True}
             )
         )
+
+        # We don't need postgres dialect's escaping at this level
+        # All escaping will be done on the aidbox side
+        return compiled.replace('\\\\', '\\')
 
     async def alchemy(self, statement, *, execute=False):
         if not isinstance(statement, ClauseElement):
