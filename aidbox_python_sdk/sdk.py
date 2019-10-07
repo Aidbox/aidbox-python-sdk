@@ -157,7 +157,7 @@ class SDK(object):
             for method in methods:
                 operation_id = '{}.{}.{}.{}'.format(
                     method, func.__module__, func.__name__, '_'.join(_str_path)
-                )
+                ).replace('$', 'd')
                 self._operations[operation_id] = {
                     'method': method,
                     'path': path,
