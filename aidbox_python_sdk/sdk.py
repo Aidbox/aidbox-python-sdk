@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from aidboxpy import AsyncAidboxClient
 from fhirpy.base.exceptions import ResourceNotFound
 from aiohttp import BasicAuth, ClientSession
@@ -52,6 +53,11 @@ class SDK(object):
         self.db = DBProxy(self._settings)
 
     async def initialize(self, config):
+        app_override_aidbox_base_url = os.environ.get(
+            'APP_OVERRIDE_AIDBOX_BASE_URL'
+        )
+        if app_override_aidbox_base_url:
+            config['box']['base-url'] = app_override_aidbox_base_url
         await self._init_aidbox_client(config)
         await self._create_seed_resources()
         await self._apply_migrations()

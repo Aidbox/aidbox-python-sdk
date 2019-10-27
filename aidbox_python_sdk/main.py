@@ -1,10 +1,11 @@
+import asyncio
 import logging
 import sys
 import errno
+import os
 
 from pathlib import Path
 from aiohttp import web, ClientSession, BasicAuth, client_exceptions
-import asyncio
 
 from .handlers import routes
 
@@ -65,6 +66,47 @@ async def wait_and_init_aidbox(app):
     await init_aidbox(app)
 
 
+def fake_config(settings, client):
+    return {
+        'type':'config',
+        'box':{
+            'base-url': settings.APP_INIT_URL,
+        },
+        'client': client,
+    }
+
+
+async def fast_start(app):
+    manifest = {}
+    async with app['init_http_client'].get(
+        '{}/App/{}'.format(
+            app['settings'].APP_INIT_URL,
+            app['settings'].APP_ID)
+        ) as resp:
+            if resp.status == 200:
+                manifest = await resp.json()
+
+    if 'meta' in manifest:
+        del manifest['meta']
+    if not manifest or app['sdk'].build_manifest() != manifest:
+        return False
+
+    client = None
+    async with app['init_http_client'].get(
+        '{}/Client/{}'.format(
+            app['settings'].APP_INIT_URL,
+            app['settings'].APP_ID)
+        ) as resp:
+            if resp.status == 200:
+                client = await resp.json()
+    if not client:
+        return False
+
+    config = fake_config(app['settings'], client)
+    await app['sdk'].initialize(config)
+    return True
+
+
 async def on_startup(app):
     basic_auth = BasicAuth(
         login=app['settings'].APP_INIT_CLIENT_ID,
@@ -72,7 +114,10 @@ async def on_startup(app):
     )
     app['init_http_client'] = ClientSession(auth=basic_auth)
 
-    asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
+    if os.environ.get('APP_FAST_START_MODE') == 'TRUE' and await fast_start(app):
+        logger.debug('Succesfull fast start')
+    else:
+        asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
 
 
 async def on_cleanup(app):
