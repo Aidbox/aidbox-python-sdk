@@ -81,25 +81,28 @@ class SDK(object):
         )
 
     async def _create_seed_resources(self):
+        entries = []
         for entity, resources in self._seeds.items():
             for resource_id, resource in resources.items():
-                try:
-                    await self.client.resources(entity).get(id=resource_id)
-                except ResourceNotFound:
-                    seed_resource = self.client.resource(
-                        entity,
-                        **{**resource, 'id': resource_id}
-                    )
-                    await seed_resource.save()
-                    logger.debug(
-                        'Created resource "%s" with id "%s"', entity,
-                        resource_id
-                    )
-                else:
-                    logger.debug(
-                        'Resource "%s" with id "%s" already exists', entity,
-                        resource_id
-                    )
+                if resource.get('id') and resource['id'] != resource_id:
+                    logger.warning(
+                        'Resource \'%s\' key id=%s is not equal to the resource \'id\'=%s ',
+                        entity, resource_id, resource['id'])
+                entry = {'resource': {
+                    **resource,
+                    'id': resource_id,
+                    'resourceType': entity}}
+                # Conditional create
+                entry['request'] = {
+                    'method': 'POST',
+                    'url': '/{0}?_id={1}'.format(entity, resource_id),
+                }
+                entries.append(entry)
+        bundle = self.client.resource(
+            'Bundle',
+            type='transaction',
+            entry=entries)
+        await bundle.save()
 
     def build_manifest(self):
         if self._resources:
