@@ -91,3 +91,23 @@ async def aidbox(client):
     session = AidboxSession(auth=basic_auth)
     yield session
     await session.close()
+
+
+@pytest.yield_fixture()
+async def safe_db(aidbox):
+    resp = await aidbox.post(
+        "/$psql",
+        json={"query": "select id from transaction order by id desc limit 1;"},
+        raise_for_status=True,
+    )
+    results = await resp.json()
+    txid = results[0]["result"][0]["id"]
+
+    yield txid
+
+    await aidbox.post(
+        "/$psql",
+        json={"query": "select drop_before_all({});".format(txid)},
+        params={"execute": "true"},
+        raise_for_status=True,
+    )

@@ -4,6 +4,7 @@ from aidboxpy import AsyncAidboxClient
 from fhirpy.base.exceptions import ResourceNotFound
 from aiohttp import BasicAuth, ClientSession
 from .db import DBProxy
+from .db_migrations import sdk_migrations
 
 logger = logging.getLogger('aidbox_sdk')
 
@@ -16,6 +17,7 @@ class SDK(object):
         entities=None,
         resources=None,
         seeds=None,
+        migrations=None,
         on_ready=None,
         on_deinitialize=None
     ):
@@ -39,6 +41,7 @@ class SDK(object):
         self._resources = resources or {}
         self._entities = entities or {}
         self._seeds = seeds or {}
+        self._migrations = migrations or []
         self._on_ready = on_ready
         self._on_deinitialize = on_deinitialize
         self._app_endpoint_name = '{}-endpoint'.format(settings.APP_ID)
@@ -51,6 +54,7 @@ class SDK(object):
     async def initialize(self, config):
         await self._init_aidbox_client(config)
         await self._create_seed_resources()
+        await self._apply_migrations()
         await self.db.initialize(config)
 
         self._initialized = True
@@ -79,6 +83,21 @@ class SDK(object):
             '{}'.format(config['box']['base-url']),
             authorization=basic_auth.encode()
         )
+
+    async def _apply_migrations(self):
+        await self.client.resource(
+            'Bundle',
+            type='transaction',
+            entry=[
+                {
+                    'resource': self._migrations + sdk_migrations,
+                    'request': {
+                        'method': 'POST',
+                        'url': '/db/migrations'
+                    }
+                }
+            ]
+        ).save()
 
     async def _create_seed_resources(self):
         entries = []
