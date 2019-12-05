@@ -57,6 +57,7 @@ class BaseAidboxMapping(Base):
     id = Column(Text, primary_key=True)
     txid = Column(BigInteger, nullable=False)
     ts = Column(DateTime(True), server_default=text("CURRENT_TIMESTAMP"))
+    cts = Column(DateTime(True), server_default=text("CURRENT_TIMESTAMP"))
     resource_type = Column(Text, server_default=text("'App'::text"))
     status = Column(
         Enum(
