@@ -23,7 +23,7 @@ async def init_aidbox(app):
         json = {
             'url': app['settings'].APP_URL,
             'app_id': app['settings'].APP_ID,
-            'secret': app['settings'].APP_INIT_CLIENT_SECRET,
+            'secret': app['settings'].APP_SECRET,
         }
         async with app['init_http_client'].post(
             '{}/App/$init'.format(app['settings'].APP_INIT_URL), json=json
@@ -68,8 +68,8 @@ async def wait_and_init_aidbox(app):
 
 def fake_config(settings, client):
     return {
-        'type':'config',
-        'box':{
+        'type': 'config',
+        'box': {
             'base-url': settings.APP_INIT_URL,
         },
         'client': client,
@@ -77,6 +77,9 @@ def fake_config(settings, client):
 
 
 async def fast_start(app):
+    if not os.environ.get('APP_FAST_START_MODE', 'FALSE').upper() == 'TRUE':
+        return False
+
     manifest = {}
     async with app['init_http_client'].get(
         '{}/App/{}'.format(
@@ -89,6 +92,7 @@ async def fast_start(app):
     if 'meta' in manifest:
         del manifest['meta']
     if not manifest or app['sdk'].build_manifest() != manifest:
+        logger.info('Fast start failed due to new manifest')
         return False
 
     client = None
@@ -100,6 +104,7 @@ async def fast_start(app):
             if resp.status == 200:
                 client = await resp.json()
     if not client:
+        logger.info('Fast start failed due to absence of app client')
         return False
 
     config = fake_config(app['settings'], client)
@@ -114,9 +119,7 @@ async def on_startup(app):
     )
     app['init_http_client'] = ClientSession(auth=basic_auth)
 
-    if os.environ.get('APP_FAST_START_MODE') == 'TRUE' and await fast_start(app):
-        logger.debug('Succesfull fast start')
-    else:
+    if not await fast_start(app):
         asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
 
 
