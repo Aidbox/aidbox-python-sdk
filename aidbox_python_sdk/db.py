@@ -11,6 +11,7 @@ from sqlalchemy.dialects.postgresql import JSONB, ARRAY, dialect as postgresql_d
 from .exceptions import AidboxDBException
 
 logger = logging.getLogger('aidbox_sdk.db')
+table_metadata = MetaData()
 
 
 class AidboxPostgresqlDialect(postgresql_dialect):
@@ -51,7 +52,7 @@ class _ARRAY(TypeDecorator):
 def create_table(table_name):
     return Table(
         table_name,
-        MetaData(),
+        table_metadata,
         Column('id', Text, primary_key=True),
         Column('txid', BigInteger, nullable=False),
         Column('ts', DateTime(True), server_default=text("CURRENT_TIMESTAMP")),
