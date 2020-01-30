@@ -3,16 +3,13 @@ import json
 
 from aiohttp import BasicAuth, ClientSession
 from sqlalchemy import (
-    BigInteger, Column, DateTime, Enum, Text, text, TypeDecorator
+    BigInteger, Column, DateTime, Enum, Text, text, TypeDecorator, Table, MetaData
 )
 from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY, dialect as postgresql_dialect
-from sqlalchemy.ext.declarative import declarative_base
 
 from .exceptions import AidboxDBException
 
-Base = declarative_base()
-metadata = Base.metadata
 logger = logging.getLogger('aidbox_sdk.db')
 
 
@@ -51,30 +48,33 @@ class _ARRAY(TypeDecorator):
         )
 
 
-class BaseAidboxMapping(Base):
-    __abstract__ = True
-
-    id = Column(Text, primary_key=True)
-    txid = Column(BigInteger, nullable=False)
-    ts = Column(DateTime(True), server_default=text("CURRENT_TIMESTAMP"))
-    cts = Column(DateTime(True), server_default=text("CURRENT_TIMESTAMP"))
-    resource_type = Column(Text, server_default=text("'App'::text"))
-    status = Column(
-        Enum(
-            'created',
-            'updated',
-            'deleted',
-            'recreated',
-            name='resource_status'
-        ),
-        nullable=False
+def create_table(table_name):
+    return Table(
+        table_name,
+        MetaData(),
+        Column('id', Text, primary_key=True),
+        Column('txid', BigInteger, nullable=False),
+        Column('ts', DateTime(True), server_default=text("CURRENT_TIMESTAMP")),
+        Column('cts', DateTime(True), server_default=text("CURRENT_TIMESTAMP")),
+        Column('resource_type', Text, server_default=text("'App'::text")),
+        Column('status',
+               Enum(
+                   'created',
+                   'updated',
+                   'deleted',
+                   'recreated',
+                   name='resource_status'
+               ),
+               nullable=False
+               ),
+        Column('resource', _JSONB(astext_type=Text()), nullable=False, index=True)
     )
-    resource = Column(_JSONB(astext_type=Text()), nullable=False, index=True)
 
 
 class DBProxy(object):
     _client = None
     _devbox_url = None
+    _table_cache = {}
 
     def __init__(self, settings):
         self._devbox_url = settings.APP_INIT_URL
@@ -84,7 +84,7 @@ class DBProxy(object):
             login=config['client']['id'], password=config['client']['secret']
         )
         self._client = ClientSession(auth=basic_auth)
-        await self.create_all_mappings()
+        await self._init_table_cache()
 
     async def deinitialize(self):
         await self._client.close()
@@ -142,26 +142,25 @@ class DBProxy(object):
             json_resp = await resp.json()
             return [entry['resource']['id'] for entry in json_resp['entry']]
 
-    def _create_table_mapping(self, table_name):
-        mapping = type(
-            table_name.capitalize(), (BaseAidboxMapping, ),
-            {'__tablename__': table_name}
-        )
-        return mapping()
+    async def _init_table_cache(self):
+        table_names = await self._get_all_entities_name()
+        self._table_cache = {
+            **{table_name: {
+                'table_name': table_name.lower()
+            } for table_name in table_names},
+            **{'{}History'.format(table_name): {
+                'table_name': '{}_history'.format(table_name.lower())
+            } for table_name in table_names},
+        }
 
-    async def create_all_mappings(self):
-        tables = await self._get_all_entities_name()
+    def __getattr__(self, item):
+        if item in self._table_cache:
+            cache = self._table_cache[item]
+            if cache.get('table') is None:
+                cache['table'] = create_table(cache['table_name'])
+            return cache['table']
 
-        for t in tables:
-            setattr(self, t, self._create_table_mapping(t.lower()))
-
-        for t in tables:
-            setattr(
-                self, '{}History'.format(t),
-                self._create_table_mapping('{}_history'.format(t.lower()))
-            )
-
-        logger.debug('{} table mappings were created'.format(len(tables)))
+        raise AttributeError
 
 
 def row_to_resource(row):
