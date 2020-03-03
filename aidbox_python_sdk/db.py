@@ -136,7 +136,8 @@ class DBProxy(object):
         return await self.raw_sql(query, execute=execute)
 
     async def _get_all_entities_name(self):
-        query_url = '{}/Entity?type=resource&_elements=id&_count=10000'.format(
+        # TODO: refactor using sdk.client and fetch_all
+        query_url = '{}/Entity?type=resource&_elements=id&_count=1000'.format(
             self._devbox_url
         )
         async with self._client.get(query_url, raise_for_status=True) as resp:
