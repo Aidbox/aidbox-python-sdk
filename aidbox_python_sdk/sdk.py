@@ -146,12 +146,19 @@ class SDK(object):
             self._subscriptions[entity] = {'handler': path}
 
             async def func_triggered(*args, **kwargs):
-                result = func(*args, **kwargs)
-                if asyncio.iscoroutine(result):
-                    result = await result
-                if entity in self._sub_triggered:
-                    self._sub_triggered[entity].set_result(True)
-                return result
+                try:
+                    result = func(*args, **kwargs)
+                    if asyncio.iscoroutine(result):
+                        result = await result
+                    return result
+                except Exception as exc:
+                    logger.exception(exc)
+                    raise
+                finally:
+                    if entity in self._sub_triggered:
+                        future = self._sub_triggered[entity]
+                        if not future.done():
+                            future.set_result(True)
 
             self._subscription_handlers[path] = func_triggered
             return func
@@ -162,8 +169,13 @@ class SDK(object):
         return self._subscription_handlers.get(path)
 
     def was_subscription_triggered(self, entity):
-        self._sub_triggered[entity] = asyncio.Future()
-        return self._sub_triggered[entity]
+        future = asyncio.Future()
+        self._sub_triggered[entity] = future
+        asyncio.get_event_loop().call_later(
+            5,
+            lambda: None if future.done() else future.set_exception(Exception()))
+
+        return future
 
     def operation(self, methods, path, public=False, access_policy=None):
         if public == True and access_policy is not None:
