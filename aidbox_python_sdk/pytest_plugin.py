@@ -57,7 +57,10 @@ async def start_app(aiohttp_client):
             "port": 8081
         }
     )
-    await app.server.app['sdk'].is_ready
+    sdk = app.server.app['sdk']
+    sdk._test_start_txid = -1
+
+    await sdk.is_ready
     return app
 
 
@@ -94,7 +97,9 @@ async def aidbox(client):
 
 
 @pytest.yield_fixture()
-async def safe_db(aidbox):
+async def safe_db(aidbox, client):
+    sdk = client.server.app['sdk']
+
     resp = await aidbox.post(
         "/$psql",
         json={"query": "select id from transaction order by id desc limit 1;"},
@@ -102,12 +107,15 @@ async def safe_db(aidbox):
     )
     results = await resp.json()
     txid = results[0]["result"][0]["id"]
+    sdk._test_start_txid = int(txid)
 
     yield txid
 
+    sdk._test_start_txid = -1
     await aidbox.post(
         "/$psql",
         json={"query": "select drop_before_all({});".format(txid)},
         params={"execute": "true"},
         raise_for_status=True,
     )
+

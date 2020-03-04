@@ -51,6 +51,7 @@ class SDK(object):
         self.is_ready = asyncio.Future()
         self.client = None
         self.db = DBProxy(self._settings)
+        self._test_start_txid = None
 
     async def initialize(self, config):
         app_override_aidbox_base_url = os.environ.get(
@@ -145,22 +146,36 @@ class SDK(object):
             path = func.__name__
             self._subscriptions[entity] = {'handler': path}
 
-            async def func_triggered(*args, **kwargs):
-                try:
-                    result = func(*args, **kwargs)
-                    if asyncio.iscoroutine(result):
-                        result = await result
-                    return result
-                except Exception as exc:
-                    logger.exception(exc)
-                    raise
-                finally:
-                    if entity in self._sub_triggered:
-                        future = self._sub_triggered[entity]
-                        if not future.done():
+            async def handler(event):
+                if self._test_start_txid is not None:
+                    # Skip outside test
+                    if self._test_start_txid == -1:
+                        return
+
+                    # Skip inside another test
+                    if int(event['tx']['id']) < self._test_start_txid:
+                        return
+                coro_or_result = func(event)
+                if asyncio.iscoroutine(coro_or_result):
+                    result = await coro_or_result
+                else:
+                    logger.warning('Synchronous subscription handler is deprecated: %s', path)
+                    result = coro_or_result
+
+                if entity in self._sub_triggered:
+                    future, counter = self._sub_triggered[entity]
+                    if counter > 1:
+                        self._sub_triggered[entity] = (future, counter - 1)
+                    else:
+                        if future.done():
+                            pass
+                            # logger.warning('Uncaught subscription for %s', entity)
+                        else:
                             future.set_result(True)
 
-            self._subscription_handlers[path] = func_triggered
+                return result
+
+            self._subscription_handlers[path] = handler
             return func
 
         return wrap
@@ -168,14 +183,19 @@ class SDK(object):
     def get_subscription_handler(self, path):
         return self._subscription_handlers.get(path)
 
-    def was_subscription_triggered(self, entity):
+    def was_subscription_triggered_n_times(self, entity, counter):
+        timeout = 10
+
         future = asyncio.Future()
-        self._sub_triggered[entity] = future
+        self._sub_triggered[entity] = (future, counter)
         asyncio.get_event_loop().call_later(
-            5,
+            timeout,
             lambda: None if future.done() else future.set_exception(Exception()))
 
         return future
+
+    def was_subscription_triggered(self, entity):
+        return self.was_subscription_triggered_n_times(entity, 1)
 
     def operation(self, methods, path, public=False, access_policy=None):
         if public == True and access_policy is not None:
