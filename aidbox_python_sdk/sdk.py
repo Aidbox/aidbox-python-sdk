@@ -73,6 +73,9 @@ class SDK(object):
         self.is_ready.set_result(True)
 
     async def deinitialize(self):
+        if not self.is_initialized():
+            return
+        
         await self.db.deinitialize()
         self._initialized = False
 
