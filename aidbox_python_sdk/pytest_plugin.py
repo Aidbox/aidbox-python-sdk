@@ -102,11 +102,11 @@ async def safe_db(aidbox, client):
 
     resp = await aidbox.post(
         "/$psql",
-        json={"query": "select id from transaction order by id desc limit 1;"},
+        json={"query": "SELECT last_value from transaction_id_seq;"},
         raise_for_status=True,
     )
     results = await resp.json()
-    txid = results[0]["result"][0]["id"]
+    txid = results[0]["result"][0]["last_value"]
     sdk._test_start_txid = int(txid)
 
     yield txid
