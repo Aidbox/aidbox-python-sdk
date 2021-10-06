@@ -20,16 +20,23 @@ def setup_routes(app):
 
 async def init_aidbox(app):
     try:
-        json = {
-            'url': app['settings'].APP_URL,
-            'app_id': app['settings'].APP_ID,
-            'secret': app['settings'].APP_SECRET,
-        }
         async with app['init_http_client'].put(
-            '{}/App'.format(app['settings'].APP_INIT_URL), json=json
+            '{}/App'.format(app['settings'].APP_INIT_URL), json={
+                 resourceType: 'App',
+                 apiVersion: 1,
+                 type: 'app',
+                 id: app['settings'].APP_ID,
+                 endpoint: {
+                     url: app['settings'].APP_URL,
+                     type: 'http-rpc',
+                     secret: app['settings'].APP_SECRET,
+                },
+                **app['sdk'].build_manifest()
+            }
         ) as resp:
             if 200 <= resp.status < 300:
                 logger.info('Initializing Aidbox app...')
+                await app['sdk'].initialize()
             else:
                 logger.error(
                     'Aidbox app initialized failed. '
@@ -64,16 +71,6 @@ async def wait_and_init_aidbox(app):
         ):
             await asyncio.sleep(2)
     await init_aidbox(app)
-
-
-def fake_config(settings, client):
-    return {
-        'type': 'config',
-        'box': {
-            'base-url': settings.APP_INIT_URL,
-        },
-        'client': client,
-    }
 
 
 async def on_startup(app):

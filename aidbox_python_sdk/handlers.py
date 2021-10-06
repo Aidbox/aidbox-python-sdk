@@ -7,11 +7,6 @@ logger = logging.getLogger('aidbox_sdk')
 routes = web.RouteTableDef()
 
 
-async def manifest(request, data):
-    logger.debug('App manifest: {}'.format(request.app['sdk'].build_manifest()))
-    return web.json_response({'manifest': request.app['sdk'].build_manifest()})
-
-
 async def subscription(request, data):
     logger.debug('Subscription handler: {}'.format(data['handler']))
     if not request.app['sdk'].is_initialized():
@@ -55,23 +50,10 @@ async def operation(request, data):
     return result
 
 
-async def config(request, config):
-    await request.app['sdk'].initialize(config)
-    return web.json_response({})
-
-
 TYPES = {
-    'manifest': manifest,
-    'config': config,
     'operation': operation,
     'subscription': subscription,
 }
-
-
-@routes.get('/init')
-async def init(request):
-    await request.app['init_aidbox_app'](request.app)
-    return web.json_response({})
 
 
 @routes.post('/')
