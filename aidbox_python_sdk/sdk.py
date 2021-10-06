@@ -54,8 +54,10 @@ class SDK(object):
         self._test_start_txid = None
 
     async def initialize(self, config):
+        # We override it with internal url, because aidbox base url is usually public
+        # It gives an ability to interact with aidbox inside local network
         app_override_aidbox_base_url = os.environ.get(
-            'APP_OVERRIDE_AIDBOX_BASE_URL'
+            'APP_INIT_URL'
         )
         if app_override_aidbox_base_url:
             config['box']['base-url'] = app_override_aidbox_base_url
