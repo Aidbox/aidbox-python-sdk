@@ -22,14 +22,14 @@ async def init_aidbox(app):
     try:
         async with app['init_http_client'].put(
             '{}/App'.format(app['settings'].APP_INIT_URL), json={
-                 resourceType: 'App',
-                 apiVersion: 1,
-                 type: 'app',
-                 id: app['settings'].APP_ID,
-                 endpoint: {
-                     url: app['settings'].APP_URL,
-                     type: 'http-rpc',
-                     secret: app['settings'].APP_SECRET,
+                 'resourceType': 'App',
+                 'apiVersion': 1,
+                 'type': 'app',
+                 'id': app['settings'].APP_ID,
+                 'endpoint': {
+                     'url': app['settings'].APP_URL,
+                     'type': 'http-rpc',
+                     'secret': app['settings'].APP_SECRET,
                 },
                 **app['sdk'].build_manifest()
             }
