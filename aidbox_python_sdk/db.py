@@ -74,15 +74,15 @@ def create_table(table_name):
 
 class DBProxy(object):
     _client = None
-    _devbox_url = None
+    _settings = None
     _table_cache = {}
 
     def __init__(self, settings):
-        self._devbox_url = settings.APP_INIT_URL
+        self._settings = settings
 
-    async def initialize(self, config):
+    async def initialize(self):
         basic_auth = BasicAuth(
-            login=config['client']['id'], password=config['client']['secret']
+            login=self._settings.APP_INIT_CLIENT_ID, password=self._settings.APP_INIT_CLIENT_SECRET
         )
         self._client = ClientSession(auth=basic_auth)
         await self._init_table_cache()
@@ -106,7 +106,7 @@ class DBProxy(object):
                 'Check that your query does not '
                 'contain two queries separated by `;`'
             )
-        query_url = '{}/$psql'.format(self._devbox_url)
+        query_url = '{}/$psql'.format(self._settings.APP_INIT_URL)
         async with self._client.post(
             query_url,
             json={'query': sql_query},
@@ -138,7 +138,7 @@ class DBProxy(object):
     async def _get_all_entities_name(self):
         # TODO: refactor using sdk.client and fetch_all
         query_url = '{}/Entity?type=resource&_elements=id&_count=999'.format(
-            self._devbox_url
+            self._settings.APP_INIT_URL
         )
         async with self._client.get(query_url, raise_for_status=True) as resp:
             json_resp = await resp.json()

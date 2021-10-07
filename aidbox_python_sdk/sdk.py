@@ -53,16 +53,11 @@ class SDK(object):
         self.db = DBProxy(self._settings)
         self._test_start_txid = None
 
-    async def initialize(self, config):
-        app_override_aidbox_base_url = os.environ.get(
-            'APP_OVERRIDE_AIDBOX_BASE_URL'
-        )
-        if app_override_aidbox_base_url:
-            config['box']['base-url'] = app_override_aidbox_base_url
-        await self._init_aidbox_client(config)
+    async def initialize(self):
+        await self._init_aidbox_client()
         await self._create_seed_resources()
         await self._apply_migrations()
-        await self.db.initialize(config)
+        await self.db.initialize()
 
         self._initialized = True
         logger.info('Aidbox app successfully initialized')
@@ -85,12 +80,12 @@ class SDK(object):
     def is_initialized(self):
         return self._initialized
 
-    async def _init_aidbox_client(self, config):
+    async def _init_aidbox_client(self):
         basic_auth = BasicAuth(
-            login=config['client']['id'], password=config['client']['secret']
+            login=self._settings.APP_INIT_CLIENT_ID, password=self._settings.APP_INIT_CLIENT_SECRET
         )
         self.client = AsyncAidboxClient(
-            '{}'.format(config['box']['base-url']),
+            '{}'.format(self._settings.APP_INIT_URL),
             authorization=basic_auth.encode()
         )
 
