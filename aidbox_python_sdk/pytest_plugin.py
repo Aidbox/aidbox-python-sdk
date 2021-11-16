@@ -52,12 +52,9 @@ def aiohttp_client(loop):  # type: ignore
 
 async def start_app(aiohttp_client):
     app = await aiohttp_client(
-        await _create_app(), server_kwargs={
-            "host": "0.0.0.0",
-            "port": 8081
-        }
+        await _create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081}
     )
-    sdk = app.server.app['sdk']
+    sdk = app.server.app["sdk"]
     sdk._test_start_txid = -1
 
     await sdk.is_ready
@@ -72,7 +69,7 @@ def client(loop, aiohttp_client):
 
 class AidboxSession(ClientSession):
     def __init__(self, *args, base_url=None, **kwargs):
-        self.base_url = URL(base_url or os.environ.get('AIDBOX_BASE_URL'))
+        self.base_url = URL(base_url or os.environ.get("AIDBOX_BASE_URL"))
         super().__init__(*args, **kwargs)
 
     def make_url(self, path):
@@ -98,7 +95,7 @@ async def aidbox(client):
 
 @pytest.yield_fixture()
 async def safe_db(aidbox, client):
-    sdk = client.server.app['sdk']
+    sdk = client.server.app["sdk"]
 
     resp = await aidbox.post(
         "/$psql",
@@ -118,4 +115,3 @@ async def safe_db(aidbox, client):
         params={"execute": "true"},
         raise_for_status=True,
     )
-

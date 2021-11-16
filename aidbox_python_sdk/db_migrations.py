@@ -1,7 +1,7 @@
 sdk_migrations = [
     {
-        'id': '20190909_add_drop_before',
-        'sql': """
+        "id": "20190909_add_drop_before",
+        "sql": """
 DROP FUNCTION IF EXISTS drop_before_all(integer);
 
 CREATE FUNCTION drop_before_all(integer) RETURNS VOID AS $$
@@ -14,6 +14,6 @@ END LOOP;
 END;
 
 $$ LANGUAGE plpgsql;
-        """
+        """,
     }
 ]

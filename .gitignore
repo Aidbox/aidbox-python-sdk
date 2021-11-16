@@ -6,3 +6,4 @@ config
 __pycache__
 venv
 .DS_Store
+aidbox_python_sdk.egg-info/

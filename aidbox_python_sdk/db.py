@@ -3,14 +3,22 @@ import json
 
 from aiohttp import BasicAuth, ClientSession
 from sqlalchemy import (
-    BigInteger, Column, DateTime, Enum, Text, text, TypeDecorator, Table, MetaData
+    BigInteger,
+    Column,
+    DateTime,
+    Enum,
+    Text,
+    text,
+    TypeDecorator,
+    Table,
+    MetaData,
 )
 from sqlalchemy.sql.elements import ClauseElement
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY, dialect as postgresql_dialect
 
 from .exceptions import AidboxDBException
 
-logger = logging.getLogger('aidbox_sdk.db')
+logger = logging.getLogger("aidbox_sdk.db")
 table_metadata = MetaData()
 
 
@@ -25,12 +33,11 @@ class _JSONB(TypeDecorator):
 
     def process_literal_param(self, value, dialect):
         if isinstance(value, dict):
-            return '\'{}\''.format(json.dumps(value).replace("'", "''"))
+            return "'{}'".format(json.dumps(value).replace("'", "''"))
         elif isinstance(value, str):
             return value
         raise ValueError(
-            'Don\'t know how to literal-quote '
-            'value of type {}'.format(type(value))
+            "Don't know how to literal-quote " "value of type {}".format(type(value))
         )
 
 
@@ -39,13 +46,11 @@ class _ARRAY(TypeDecorator):
 
     def process_literal_param(self, value, dialect):
         if isinstance(value, list):
-            return 'ARRAY{}'.format(value)
+            return "ARRAY{}".format(value)
         elif isinstance(value, str):
             return value
         raise ValueError(
-            'Don\'t know how to literal-quote value of type {}'.format(
-                type(value)
-            )
+            "Don't know how to literal-quote value of type {}".format(type(value))
         )
 
 
@@ -53,22 +58,17 @@ def create_table(table_name):
     return Table(
         table_name,
         table_metadata,
-        Column('id', Text, primary_key=True),
-        Column('txid', BigInteger, nullable=False),
-        Column('ts', DateTime(True), server_default=text("CURRENT_TIMESTAMP")),
-        Column('cts', DateTime(True), server_default=text("CURRENT_TIMESTAMP")),
-        Column('resource_type', Text, server_default=text("'App'::text")),
-        Column('status',
-               Enum(
-                   'created',
-                   'updated',
-                   'deleted',
-                   'recreated',
-                   name='resource_status'
-               ),
-               nullable=False
-               ),
-        Column('resource', _JSONB(astext_type=Text()), nullable=False, index=True)
+        Column("id", Text, primary_key=True),
+        Column("txid", BigInteger, nullable=False),
+        Column("ts", DateTime(True), server_default=text("CURRENT_TIMESTAMP")),
+        Column("cts", DateTime(True), server_default=text("CURRENT_TIMESTAMP")),
+        Column("resource_type", Text, server_default=text("'App'::text")),
+        Column(
+            "status",
+            Enum("created", "updated", "deleted", "recreated", name="resource_status"),
+            nullable=False,
+        ),
+        Column("resource", _JSONB(astext_type=Text()), nullable=False, index=True),
     )
 
 
@@ -82,7 +82,8 @@ class DBProxy(object):
 
     async def initialize(self):
         basic_auth = BasicAuth(
-            login=self._settings.APP_INIT_CLIENT_ID, password=self._settings.APP_INIT_CLIENT_SECRET
+            login=self._settings.APP_INIT_CLIENT_ID,
+            password=self._settings.APP_INIT_CLIENT_SECRET,
         )
         self._client = ClientSession(auth=basic_auth)
         await self._init_table_cache()
@@ -98,69 +99,72 @@ class DBProxy(object):
         otherwise you'll get an AidboxDBException
         """
         if not self._client:
-            raise ValueError('Client not set')
+            raise ValueError("Client not set")
         if not isinstance(sql_query, str):
-            ValueError('sql_query must be a str')
-        if not execute and sql_query.count(';') > 1:
+            ValueError("sql_query must be a str")
+        if not execute and sql_query.count(";") > 1:
             logger.warning(
-                'Check that your query does not '
-                'contain two queries separated by `;`'
+                "Check that your query does not " "contain two queries separated by `;`"
             )
-        query_url = '{}/$psql'.format(self._settings.APP_INIT_URL)
+        query_url = "{}/$psql".format(self._settings.APP_INIT_URL)
         async with self._client.post(
             query_url,
-            json={'query': sql_query},
-            params={'execute': 'true'} if execute else {},
-            raise_for_status=True
+            json={"query": sql_query},
+            params={"execute": "true"} if execute else {},
+            raise_for_status=True,
         ) as resp:
-            logger.debug('$psql answer {0}'.format(await resp.text()))
+            logger.debug("$psql answer {0}".format(await resp.text()))
             results = await resp.json()
 
-            if results[0]['status'] == 'error':
+            if results[0]["status"] == "error":
                 raise AidboxDBException(results[0])
-            return results[0].get('result', None)
+            return results[0].get("result", None)
 
     def compile_statement(self, statement):
         return str(
             statement.compile(
                 dialect=AidboxPostgresqlDialect(),
-                compile_kwargs={"literal_binds": True}
+                compile_kwargs={"literal_binds": True},
             )
         )
 
     async def alchemy(self, statement, *, execute=False):
         if not isinstance(statement, ClauseElement):
-            ValueError('statement must be a sqlalchemy expression')
+            ValueError("statement must be a sqlalchemy expression")
         query = self.compile_statement(statement)
-        logger.debug('Built query:\n%s', query)
+        logger.debug("Built query:\n%s", query)
         return await self.raw_sql(query, execute=execute)
 
     async def _get_all_entities_name(self):
         # TODO: refactor using sdk.client and fetch_all
-        query_url = '{}/Entity?type=resource&_elements=id&_count=999'.format(
+        query_url = "{}/Entity?type=resource&_elements=id&_count=999".format(
             self._settings.APP_INIT_URL
         )
         async with self._client.get(query_url, raise_for_status=True) as resp:
             json_resp = await resp.json()
-            return [entry['resource']['id'] for entry in json_resp['entry']]
+            return [entry["resource"]["id"] for entry in json_resp["entry"]]
 
     async def _init_table_cache(self):
         table_names = await self._get_all_entities_name()
         self._table_cache = {
-            **{table_name: {
-                'table_name': table_name.lower()
-            } for table_name in table_names},
-            **{'{}History'.format(table_name): {
-                'table_name': '{}_history'.format(table_name.lower())
-            } for table_name in table_names},
+            **{
+                table_name: {"table_name": table_name.lower()}
+                for table_name in table_names
+            },
+            **{
+                "{}History".format(table_name): {
+                    "table_name": "{}_history".format(table_name.lower())
+                }
+                for table_name in table_names
+            },
         }
 
     def __getattr__(self, item):
         if item in self._table_cache:
             cache = self._table_cache[item]
-            if cache.get('table') is None:
-                cache['table'] = create_table(cache['table_name'])
-            return cache['table']
+            if cache.get("table") is None:
+                cache["table"] = create_table(cache["table_name"])
+            return cache["table"]
 
         raise AttributeError
 
@@ -182,17 +186,19 @@ def row_to_resource(row):
      'name': [],
      'resourceType': 'Patient'}
     """
-    resource = row['resource']
-    meta = row['resource'].get('meta', {})
-    meta.update({
-        'lastUpdated': row['ts'],
-        'versionId': str(row['txid']),
-    })
+    resource = row["resource"]
+    meta = row["resource"].get("meta", {})
+    meta.update(
+        {
+            "lastUpdated": row["ts"],
+            "versionId": str(row["txid"]),
+        }
+    )
     resource.update(
         {
-            'resourceType': row['resource_type'],
-            'id': row['id'],
-            'meta': meta,
+            "resourceType": row["resource_type"],
+            "id": row["id"],
+            "meta": meta,
         }
     )
     return resource
