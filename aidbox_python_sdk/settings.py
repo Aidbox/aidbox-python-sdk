@@ -18,7 +18,8 @@ class Settings:
 
     Or, passing the custom setting as a keyword argument when initialising settings (useful when testing)
     """
-    _ENV_PREFIX = ''
+
+    _ENV_PREFIX = ""
 
     APP_INIT_CLIENT_ID = Required(v_type=str)
     APP_INIT_CLIENT_SECRET = Required(v_type=str)
@@ -40,14 +41,14 @@ class Settings:
             # if not hasattr(self, name):
             #     raise TypeError('{} is not a valid setting name'.format(name))
             setattr(self, name, value)
-        setattr(self, 'static_path', None)
+        setattr(self, "static_path", None)
 
     def substitute_environ(self):
         """
         Substitute environment variables into settings.
         """
         for attr_name in dir(self):
-            if attr_name.startswith('_') or attr_name.upper() != attr_name:
+            if attr_name.startswith("_") or attr_name.upper() != attr_name:
                 continue
             orig_value = getattr(self, attr_name)
             is_required = isinstance(orig_value, Required)
@@ -56,7 +57,7 @@ class Settings:
             env_var = os.getenv(env_var_name, None)
             if env_var is not None:
                 if issubclass(orig_type, bool):
-                    env_var = env_var.upper() in ('1', 'TRUE')
+                    env_var = env_var.upper() in ("1", "TRUE")
                 elif issubclass(orig_type, int):
                     env_var = int(env_var)
                 elif issubclass(orig_type, Path):
@@ -68,8 +69,8 @@ class Settings:
             elif is_required and attr_name not in self._custom_settings:
                 raise RuntimeError(
                     'The required environment variable "{0}" is currently not set, '
-                    'you\'ll need to run `source activate.settings.sh` '
-                    'or you can set that single environment variable with '
+                    "you'll need to run `source activate.settings.sh` "
+                    "or you can set that single environment variable with "
                     '`export {0}="<value>"` or pass variable in `custom_settings` '
-                    'argument'.format(env_var_name)
+                    "argument".format(env_var_name)
                 )
