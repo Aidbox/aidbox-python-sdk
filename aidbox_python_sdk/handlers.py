@@ -2,6 +2,7 @@ import logging
 import asyncio
 import os
 from aiohttp import web
+from fhirpy.base.exceptions import OperationOutcome
 
 logger = logging.getLogger('aidbox_sdk')
 routes = web.RouteTableDef()
@@ -44,10 +45,13 @@ async def operation(request, data):
             'Operation handler `{}` was not found'.format(data['handler'])
         )
         raise web.HTTPNotFound()
-    result = handler(data['operation'], data['request'])
-    if asyncio.iscoroutine(result):
-        return await result
-    return result
+    try:
+        result = handler(data['operation'], data['request'])
+        if asyncio.iscoroutine(result):
+            return await result
+        return result
+    except OperationOutcome as exc:
+        return web.json_response(exc.resource, status=422)
 
 
 TYPES = {
