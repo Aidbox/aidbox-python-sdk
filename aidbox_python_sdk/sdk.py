@@ -1,9 +1,12 @@
 import asyncio
 import logging
 import os
+
+import jsonschema
 from aidboxpy import AsyncAidboxClient
-from fhirpy.base.exceptions import ResourceNotFound
 from aiohttp import BasicAuth, ClientSession
+from fhirpy.base.exceptions import OperationOutcome, ResourceNotFound
+
 from .db import DBProxy
 from .db_migrations import sdk_migrations
 
@@ -193,11 +196,17 @@ class SDK(object):
     def was_subscription_triggered(self, entity):
         return self.was_subscription_triggered_n_times(entity, 1)
 
-    def operation(self, methods, path, public=False, access_policy=None):
+    def operation(
+        self, methods, path, public=False, access_policy=None, request_schema=None
+    ):
         if public == True and access_policy is not None:
             raise ValueError(
                 "Operation might be public or have access policy, not both"
             )
+
+        request_validator = None
+        if request_schema:
+            request_validator = jsonschema.Draft202012Validator(schema=request_schema)
 
         def wrap(func):
             if not isinstance(path, list):
@@ -209,7 +218,14 @@ class SDK(object):
                 if isinstance(p, str):
                     _str_path.append(p)
                 elif isinstance(p, dict):
+
                     _str_path.append("__{}__".format(p["name"]))
+
+            def wrapped_func(operation, request):
+                if request_validator:
+                    validate_request(request_validator, request)
+                return func(operation, request)
+
             for method in methods:
                 operation_id = "{}.{}.{}.{}".format(
                     method, func.__module__, func.__name__, "_".join(_str_path)
@@ -218,7 +234,7 @@ class SDK(object):
                     "method": method,
                     "path": path,
                 }
-                self._operation_handlers[operation_id] = func
+                self._operation_handlers[operation_id] = wrapped_func
                 if public is True:
                     self._set_access_policy_for_public_op(operation_id)
                 elif access_policy is not None:
@@ -251,5 +267,30 @@ class SDK(object):
             {
                 "id": operation_id,
                 "resourceType": "Operation",
+            }
+        )
+
+
+def validate_request(request_validator, request):
+    errors = list(request_validator.iter_errors(request))
+    
+    if errors:
+        raise OperationOutcome(
+            resource={
+                "resourceType": "OperationOutcome",
+
+                "text": {
+                    "status": "generated",
+                    "div": "Invalid request"
+                },
+                "issue": [
+                    {
+                        "severity": "fatal",
+                        "code": "invalid",
+                        "expression": [".".join(ve.absolute_path)],
+                        "diagnostics": ve.message,
+                    }
+                    for ve in errors
+                ]
             }
         )

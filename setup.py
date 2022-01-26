@@ -40,6 +40,7 @@ setup(
         "fhirpy>=1.1.0",
         "aidboxpy>=1.1.0",
         "coloredlogs",
+        "jsonschema>=4.4.0"
     ],
     tests_require=["pytest>=3.6.1", "pytest-asyncio>=0.10.0", "responses>=0.10.8"],
     zip_safe=False,
