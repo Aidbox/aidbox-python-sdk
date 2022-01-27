@@ -287,7 +287,7 @@ def validate_request(request_validator, request):
                     {
                         "severity": "fatal",
                         "code": "invalid",
-                        "expression": [".".join(ve.absolute_path)],
+                        "expression": [".".join([str(x) for x in ve.absolute_path])],
                         "diagnostics": ve.message,
                     }
                     for ve in errors
