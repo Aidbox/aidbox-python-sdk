@@ -23,3 +23,64 @@ async def create_app():
     return await _create_app(settings, sdk, debug=True)
 
 ```
+
+## Register handler for operation
+```Python
+import logging
+from aiohttp import web
+
+from yourappfolder import sdk 
+
+
+@sdk.operation(
+    methods=["POST", "PATCH"],
+    path=["signup", "register", {"name": "date"}, {"name": "test"}],
+)
+def signup_register_op(operation, request):
+    """
+    POST /signup/register/21.02.19/testvalue
+    PATCH /signup/register/22.02.19/patchtestvalue
+    """
+    logging.debug("`signup_register_op` operation handler")
+    logging.debug("Operation data: %s", operation)
+    logging.debug("Request: %s", request)
+    return web.json_response({"success": "Ok", "request": request["route-params"]})
+
+```
+
+## Validate request
+```Python
+schema = {
+    "required": ["params", "resource"],
+    "properties": {
+        "params": {
+            "type": "object",
+            "required": ["abc", "location"],
+            "properties": {"abc": {"type": "string"}, "location": {"type": "string"}},
+            "additionalProperties": False,
+        },
+        "resource": {
+            "type": "object",
+            "required": ["organizationType", "employeesCount"],
+            "properties": {
+                "organizationType": {"type": "string", "enum": ["profit", "non-profit"]},
+                "employeesCount": {"type": "number"},
+            },
+            "additionalProperties": False,
+        },
+    },
+}
+
+
+@sdk.operation(["POST"], ["Organization", {"name": "id"}, "$update"], request_schema=schema)
+async def update_organization_handler(operation, request):
+    location = request["params"]["location"]
+    return web.json_response({"location": location})
+```
+### Valid request example
+```shell
+POST /Organization/org-1/$update?abc=xyz&location=us
+
+organizationType: non-profit
+employeesCount: 10
+```
