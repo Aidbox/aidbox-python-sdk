@@ -10,7 +10,7 @@ from aiohttp.client import _RequestContextManager
 from main import create_app as _create_app
 
 
-@pytest.yield_fixture(scope="session")
+@pytest.fixture(scope="session")
 def loop():  # type: ignore
     """Return an instance of the event loop."""
     loop = asyncio.get_event_loop()
@@ -80,7 +80,7 @@ class AidboxSession(ClientSession):
         return await super()._request(method, url, *args, **kwargs)
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 async def aidbox(client):
     """HTTP client for making requests to Aidbox"""
     app = client.server.app
@@ -93,7 +93,7 @@ async def aidbox(client):
     await session.close()
 
 
-@pytest.yield_fixture()
+@pytest.fixture()
 async def safe_db(aidbox, client):
     sdk = client.server.app["sdk"]
 
