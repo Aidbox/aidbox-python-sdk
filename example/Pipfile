@@ -42,7 +42,7 @@ Jinja2 = "==3.0.2"
 SQLAlchemy = ">=1.4.26"
 fhirpy = "==1.2.1"
 aidboxpy = "==1.2.0"
-aidbox-python-sdk = {git = "https://github.com/Aidbox/aidbox-python-sdk.git",ref = "103dbdbb6fe3b98cdcdafa39c919d52b6b56cb81"}
+aidbox-python-sdk = {git = "https://github.com/Aidbox/aidbox-python-sdk.git",ref = "07f444f9eeb3056f17d2c715796d5b04e7dfd8f9"}
 fhirpathpy = {git = "https://github.com/beda-software/fhirpath-py.git",ref = "aaac1a4209e3e3cbce6f62246c0822c6cdaf5af5"}
 
 
