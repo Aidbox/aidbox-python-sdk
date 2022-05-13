@@ -233,7 +233,7 @@ class SDK(object):
                 self._operations[operation_id] = {
                     "method": method,
                     "path": path,
-                    "timeout": timeout if timeout else 30000
+                    **({"timeout": timeout} if timeout else {})
                 }
                 self._operation_handlers[operation_id] = wrapped_func
                 if public is True:

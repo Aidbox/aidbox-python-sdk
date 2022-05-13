@@ -10,7 +10,12 @@ async def test_default_timout_works(sdk, safe_db):
     assert response == {"result": "success"}
 
 
-async def test_custom_timout_applied(sdk, safe_db):
+async def test_sleep_operation_fails(sdk, safe_db):
     with pytest.raises(fhirpy.base.exceptions.OperationOutcome) as timeout_exc:
-        response = await sdk.client.execute("$custom-timeout", "GET")
+        await sdk.client.execute("$sleep/2500", "GET")
     assert "idle timeout" in str(timeout_exc)
+
+
+async def test_sleep_operation_succeeds(sdk, safe_db):
+    response = await sdk.client.execute("$sleep/1", "GET")
+    assert response == {"result": "success"}

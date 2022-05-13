@@ -10,7 +10,8 @@ async def operation_handler_with_default_timeout(operation, request):
     return web.json_response({"result": "success"})
 
 
-@sdk.operation(["GET"], ["$custom-timeout"], timeout=500)
+@sdk.operation(["GET"], ["$sleep", {"name": "sleep-ms"}], timeout=2000)
 async def operation_handler_with_custom_timeout(operation, request):
-    await asyncio.sleep(1)
-    return web.json_response({"result": "should_not_be_returned"})
+    sleep_duration = int(request["route-params"]["sleep-ms"])
+    await asyncio.sleep(sleep_duration)
+    return web.json_response({"result": "success"})
