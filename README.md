@@ -35,6 +35,7 @@ from yourappfolder import sdk
 @sdk.operation(
     methods=["POST", "PATCH"],
     path=["signup", "register", {"name": "date"}, {"name": "test"}],
+    timeout=60000  ## Optional parameter to set a custom timeout for operation in milliseconds
 )
 def signup_register_op(operation, request):
     """

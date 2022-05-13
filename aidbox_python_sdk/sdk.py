@@ -197,7 +197,7 @@ class SDK(object):
         return self.was_subscription_triggered_n_times(entity, 1)
 
     def operation(
-        self, methods, path, public=False, access_policy=None, request_schema=None
+        self, methods, path, public=False, access_policy=None, request_schema=None, timeout=None
     ):
         if public == True and access_policy is not None:
             raise ValueError(
@@ -233,6 +233,7 @@ class SDK(object):
                 self._operations[operation_id] = {
                     "method": method,
                     "path": path,
+                    **({"timeout": timeout} if timeout else {})
                 }
                 self._operation_handlers[operation_id] = wrapped_func
                 if public is True:
@@ -273,7 +274,7 @@ class SDK(object):
 
 def validate_request(request_validator, request):
     errors = list(request_validator.iter_errors(request))
-    
+
     if errors:
         raise OperationOutcome(
             resource={
