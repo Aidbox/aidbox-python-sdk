@@ -26,22 +26,27 @@ async def subscription(request, data):
 
 
 async def operation(request, data):
-    logger.debug("Operation handler: {}".format(data["operation"]["id"]))
+    logger.debug("Operation handler: %s", data["operation"]["id"])
     if not request.app["sdk"].is_initialized():
         raise web.HTTPServiceUnavailable()
     if "operation" not in data or "id" not in data["operation"]:
         logger.error(
-            "`operation` or `operation[id]` param is missing, data: {}".format(data)
+            "`operation` or `operation[id]` param is missing, data: %s", data
         )
         raise web.HTTPBadRequest()
     handler = request.app["sdk"].get_operation_handler(data["operation"]["id"])
     if not handler:
-        logger.error("Operation handler `{}` was not found".format(data["handler"]))
+        logger.error("Operation handler `%s` was not found", data["handler"])
         raise web.HTTPNotFound()
     try:
         result = handler(data["operation"], data["request"])
         if asyncio.iscoroutine(result):
-            return await result
+            try:
+                return await result
+            except asyncio.CancelledError as err:
+                logger.error("Aidbox timeout for %s", data["operation"])
+                raise err
+
         return result
     except OperationOutcome as exc:
         return web.json_response(exc.resource, status=422)
