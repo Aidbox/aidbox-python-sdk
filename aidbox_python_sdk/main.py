@@ -94,6 +94,7 @@ async def on_shutdown(app):
 
 
 async def create_app(settings, sdk, debug=False):
+    sdk.is_ready = asyncio.Future()
     app = web.Application()
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)

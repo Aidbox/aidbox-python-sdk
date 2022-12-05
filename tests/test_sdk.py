@@ -7,6 +7,7 @@ from unittest import mock
 import main
 
 
+@pytest.mark.asyncio
 async def test_health_check(client):
     resp = await client.get("/")
     assert resp.status == 200
@@ -14,6 +15,7 @@ async def test_health_check(client):
     assert json == {"status": "OK"}
 
 
+@pytest.mark.asyncio
 async def test_live_health_check(client):
     resp = await client.get("/live")
     assert resp.status == 200
@@ -21,6 +23,7 @@ async def test_live_health_check(client):
     assert json == {"status": "OK"}
 
 
+@pytest.mark.asyncio
 async def test_signup_reg_op(client, aidbox):
     resp = await aidbox.post("http://localhost:8080/signup/register/21.02.19/testvalue")
     assert resp.status == 200
@@ -31,6 +34,7 @@ async def test_signup_reg_op(client, aidbox):
     }
 
 
+@pytest.mark.asyncio
 async def test_appointment_sub(client, aidbox):
     with mock.patch.object(main, "_appointment_sub") as appointment_sub:
         f = asyncio.Future()

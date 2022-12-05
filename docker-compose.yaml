@@ -1,7 +1,15 @@
 version: '3.1'
 services:
+  devbox-db:
+    image: "healthsamurai/aidboxdb:14.5"
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_USER:     postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB:       devbox
   devbox:
-    image: "healthsamurai/devbox:0.4.4"
+    image: "healthsamurai/aidboxone:edge"
     depends_on:
       - devbox-db
     links:
@@ -18,22 +26,26 @@ services:
       PGPASSWORD: postgres
       AIDBOX_CONFIG: /var/config/config.edn
     volumes:
-      - ./wait-for-it.sh:/usr/local/bin/wait-for-it.sh
       - ./config:/var/config
-  devbox-db:
-    image: "aidbox/db:11.1.0"
-    ports:
-      - "5434:5432"
-    environment:
-      POSTGRES_USER:     postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB:       devbox
+  devbox-healthcheck:
+    image: curlimages/curl
+    entrypoint: /bin/sleep 10000
+    links:
+      - devbox
+    depends_on:
+      - devbox
+    healthcheck:
+      test: curl --fail http://devbox:8080/__healthcheck || exit 1
+      interval: 1s
+      timeout: 20s
+      retries: 100
   app:
     build: ./
-    # command: ["adev", "runserver"]
-    command: ["wait-for-it.sh", "devbox:8080", "--strict", "--timeout=0", "--", "adev", "runserver"]
+    command: ["pytest"]
     depends_on:
-     - devbox
+      devbox-healthcheck:
+        condition:
+          service_healthy
     links:
      - devbox
     env_file:
@@ -42,4 +54,3 @@ services:
      - "8081:8081"
     volumes:
      - .:/app
-     - ./wait-for-it.sh:/usr/local/bin/wait-for-it.sh
