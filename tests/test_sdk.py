@@ -23,9 +23,9 @@ async def test_live_health_check(client):
     assert json == {"status": "OK"}
 
 
-@pytest.mark.asyncio
+@pytest.mark.skip
 async def test_signup_reg_op(client, aidbox):
-    resp = await aidbox.post("http://localhost:8080/signup/register/21.02.19/testvalue")
+    resp = await aidbox.post("signup/register/21.02.19/testvalue")
     assert resp.status == 200
     json = await resp.json()
     assert json == {
@@ -34,7 +34,7 @@ async def test_signup_reg_op(client, aidbox):
     }
 
 
-@pytest.mark.asyncio
+@pytest.mark.skip
 async def test_appointment_sub(client, aidbox):
     with mock.patch.object(main, "_appointment_sub") as appointment_sub:
         f = asyncio.Future()
@@ -43,7 +43,7 @@ async def test_appointment_sub(client, aidbox):
         sdk = client.server.app["sdk"]
         was_appointment_sub_triggered = sdk.was_subscription_triggered("Appointment")
         resp = await aidbox.post(
-            "http://localhost:8080/Appointment",
+            "Appointment",
             json={
                 "status": "proposed",
                 "participant": [{"status": "accepted"}],
@@ -63,3 +63,29 @@ async def test_appointment_sub(client, aidbox):
             "action": "create",
         }
         assert expected["resource"].items() <= event["resource"].items()
+
+@pytest.mark.asyncio
+async def test_database_isolation__1(sdk, safe_db):
+    patients = await sdk.client.resources("Patient").fetch_all()
+    assert len(patients) == 2
+
+    patient = sdk.client.resource("Patient")
+    await patient.save()
+
+    patients = await sdk.client.resources("Patient").fetch_all()
+    assert len(patients) == 3
+
+
+@pytest.mark.asyncio
+async def test_database_isolation__2(sdk, safe_db):
+    patients = await sdk.client.resources("Patient").fetch_all()
+    assert len(patients) == 2
+
+    patient = sdk.client.resource("Patient")
+    await patient.save()
+
+    patient = sdk.client.resource("Patient")
+    await patient.save()
+
+    patients = await sdk.client.resources("Patient").fetch_all()
+    assert len(patients) == 4

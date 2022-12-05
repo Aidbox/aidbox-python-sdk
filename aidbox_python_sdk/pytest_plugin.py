@@ -77,3 +77,7 @@ async def safe_db(aidbox, client):
         params={"execute": "true"},
         raise_for_status=True,
     )
+
+@pytest.fixture
+def sdk(client):
+    return client.server.app["sdk"]
