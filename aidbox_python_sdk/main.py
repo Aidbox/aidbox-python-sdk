@@ -56,7 +56,7 @@ async def init_aidbox(app):
         sys.exit(errno.EINTR)
 
 
-async def wait_and_init_aidbox(app):
+async def wait_aidbox(app):
     address = app["settings"].APP_URL
     logger.debug("Check availability of {}".format(address))
     while 1:
@@ -70,6 +70,10 @@ async def wait_and_init_aidbox(app):
             client_exceptions.ClientConnectionError,
         ):
             await asyncio.sleep(2)
+
+
+async def wait_and_init_aidbox(app):
+    await wait_aidbox(app)
     await init_aidbox(app)
 
 

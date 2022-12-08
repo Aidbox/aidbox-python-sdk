@@ -12,7 +12,6 @@ from main import create_app as _create_app
 
 
 async def start_app(aiohttp_client):
-
     app = await aiohttp_client(
         await _create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081}
     )
@@ -77,6 +76,7 @@ async def safe_db(aidbox, client):
         params={"execute": "true"},
         raise_for_status=True,
     )
+
 
 @pytest.fixture
 def sdk(client):
