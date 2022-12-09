@@ -4,10 +4,8 @@ import os
 
 import jsonschema
 from aidboxpy import AsyncAidboxClient
-from aiohttp import BasicAuth, ClientSession
-from fhirpy.base.exceptions import OperationOutcome, ResourceNotFound
+from fhirpy.base.exceptions import OperationOutcome
 
-from .db import DBProxy
 from .db_migrations import sdk_migrations
 
 logger = logging.getLogger("aidbox_sdk")
@@ -51,13 +49,11 @@ class SDK(object):
         self._initialized = False
         self._sub_triggered = {}
         self.is_ready = asyncio.Future()
-        self.db = DBProxy(self._settings)
         self._test_start_txid = None
 
     async def initialize(self, client: AsyncAidboxClient):
         await self._create_seed_resources(client)
         await self._apply_migrations(client)
-        await self.db.initialize()
 
         self._initialized = True
         logger.info("Aidbox app successfully initialized")
@@ -71,7 +67,6 @@ class SDK(object):
         if not self.is_initialized():
             return
 
-        await self.db.deinitialize()
         self._initialized = False
 
         if callable(self._on_deinitialize):

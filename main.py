@@ -125,7 +125,7 @@ async def daily_patient_report(operation, request):
     GET /Patient/$weekly-report
     GET /Patient/$daily-report
     """
-    patients = sdk.client.resources("Patient")
+    patients = request["app"]["client"].resources("Patient")
     async for p in patients:
         logging.debug(p.serialize())
     logging.debug("`daily_patient_report` operation handler")
@@ -138,7 +138,7 @@ async def daily_patient_report(operation, request):
 
 @routes.get("/db_tests")
 async def db_tests(request):
-    db = sdk.db
+    db = request["app"]["db"]
     app = db.App.__table__
     app_res = {
         "type": "app",

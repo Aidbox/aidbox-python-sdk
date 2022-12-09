@@ -8,6 +8,7 @@ from pathlib import Path
 from aidboxpy import AsyncAidboxClient
 from aiohttp import BasicAuth, ClientSession, client_exceptions, web
 
+from .db import DBProxy
 from .handlers import routes
 
 logger = logging.getLogger("aidbox_sdk")
@@ -75,6 +76,7 @@ async def wait_aidbox(app):
 
 async def wait_and_init_aidbox(app):
     await wait_aidbox(app)
+    await app["db"].initialize()
     await init_aidbox(app)
 
 
@@ -96,15 +98,21 @@ async def init_aidbox_client(app):
     )
 
 
+async def init_db(app):
+    app["db"] = DBProxy(app["settings"])
+
+
 async def on_startup(app):
     await init_http_client(app)
     await init_aidbox_client(app)
+    await init_db(app)
 
     asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
 
 
 async def on_cleanup(app):
     await app["init_http_client"].close()
+    await app["db"].deinitialize()
     await app["sdk"].deinitialize()
 
 
