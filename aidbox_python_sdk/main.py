@@ -38,7 +38,7 @@ async def init_aidbox(app):
         ) as resp:
             if 200 <= resp.status < 300:
                 logger.info("Initializing Aidbox app...")
-                await app["sdk"].initialize(app["aidbox_client"])
+                await app["sdk"].initialize(app["client"])
             else:
                 logger.error(
                     "Aidbox app initialized failed. "
@@ -91,7 +91,7 @@ async def init_aidbox_client(app):
         login=app["settings"].APP_INIT_CLIENT_ID,
         password=app["settings"].APP_INIT_CLIENT_SECRET,
     )
-    app["aidbox_client"] = AsyncAidboxClient(
+    app["client"] = AsyncAidboxClient(
         "{}".format(app["settings"].APP_INIT_URL), authorization=basic_auth.encode()
     )
 
