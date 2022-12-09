@@ -81,3 +81,8 @@ async def safe_db(aidbox, client):
 @pytest.fixture
 def sdk(client):
     return client.server.app["sdk"]
+
+
+@pytest.fixture
+def aidbox_client(client):
+    return client.server.app["aidbox_client"]

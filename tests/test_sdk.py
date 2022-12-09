@@ -65,27 +65,27 @@ async def test_appointment_sub(client, aidbox):
         assert expected["resource"].items() <= event["resource"].items()
 
 @pytest.mark.asyncio
-async def test_database_isolation__1(sdk, safe_db):
-    patients = await sdk.client.resources("Patient").fetch_all()
+async def test_database_isolation__1(aidbox_client, safe_db):
+    patients = await aidbox_client.resources("Patient").fetch_all()
     assert len(patients) == 2
 
-    patient = sdk.client.resource("Patient")
+    patient = aidbox_client.resource("Patient")
     await patient.save()
 
-    patients = await sdk.client.resources("Patient").fetch_all()
+    patients = await aidbox_client.resources("Patient").fetch_all()
     assert len(patients) == 3
 
 
 @pytest.mark.asyncio
-async def test_database_isolation__2(sdk, safe_db):
-    patients = await sdk.client.resources("Patient").fetch_all()
+async def test_database_isolation__2(aidbox_client, safe_db):
+    patients = await aidbox_client.resources("Patient").fetch_all()
     assert len(patients) == 2
 
-    patient = sdk.client.resource("Patient")
+    patient = aidbox_client.resource("Patient")
     await patient.save()
 
-    patient = sdk.client.resource("Patient")
+    patient = aidbox_client.resource("Patient")
     await patient.save()
 
-    patients = await sdk.client.resources("Patient").fetch_all()
+    patients = await aidbox_client.resources("Patient").fetch_all()
     assert len(patients) == 4

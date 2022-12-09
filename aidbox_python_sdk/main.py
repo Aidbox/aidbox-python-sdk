@@ -1,11 +1,12 @@
 import asyncio
-import logging
-import sys
 import errno
+import logging
 import os
-
+import sys
 from pathlib import Path
-from aiohttp import web, ClientSession, BasicAuth, client_exceptions
+
+from aidboxpy import AsyncAidboxClient
+from aiohttp import BasicAuth, ClientSession, client_exceptions, web
 
 from .handlers import routes
 
@@ -37,7 +38,7 @@ async def init_aidbox(app):
         ) as resp:
             if 200 <= resp.status < 300:
                 logger.info("Initializing Aidbox app...")
-                await app["sdk"].initialize()
+                await app["sdk"].initialize(app["aidbox_client"])
             else:
                 logger.error(
                     "Aidbox app initialized failed. "
@@ -77,12 +78,27 @@ async def wait_and_init_aidbox(app):
     await init_aidbox(app)
 
 
-async def on_startup(app):
+async def init_http_client(app):
     basic_auth = BasicAuth(
         login=app["settings"].APP_INIT_CLIENT_ID,
         password=app["settings"].APP_INIT_CLIENT_SECRET,
     )
     app["init_http_client"] = ClientSession(auth=basic_auth)
+
+
+async def init_aidbox_client(app):
+    basic_auth = BasicAuth(
+        login=app["settings"].APP_INIT_CLIENT_ID,
+        password=app["settings"].APP_INIT_CLIENT_SECRET,
+    )
+    app["aidbox_client"] = AsyncAidboxClient(
+        "{}".format(app["settings"].APP_INIT_URL), authorization=basic_auth.encode()
+    )
+
+
+async def on_startup(app):
+    await init_http_client(app)
+    await init_aidbox_client(app)
 
     asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
 

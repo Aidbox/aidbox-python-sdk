@@ -51,14 +51,12 @@ class SDK(object):
         self._initialized = False
         self._sub_triggered = {}
         self.is_ready = asyncio.Future()
-        self.client = None
         self.db = DBProxy(self._settings)
         self._test_start_txid = None
 
-    async def initialize(self):
-        await self._init_aidbox_client()
-        await self._create_seed_resources()
-        await self._apply_migrations()
+    async def initialize(self, client: AsyncAidboxClient):
+        await self._create_seed_resources(client)
+        await self._apply_migrations(client)
         await self.db.initialize()
 
         self._initialized = True
@@ -82,17 +80,8 @@ class SDK(object):
     def is_initialized(self):
         return self._initialized
 
-    async def _init_aidbox_client(self):
-        basic_auth = BasicAuth(
-            login=self._settings.APP_INIT_CLIENT_ID,
-            password=self._settings.APP_INIT_CLIENT_SECRET,
-        )
-        self.client = AsyncAidboxClient(
-            "{}".format(self._settings.APP_INIT_URL), authorization=basic_auth.encode()
-        )
-
-    async def _apply_migrations(self):
-        await self.client.resource(
+    async def _apply_migrations(self, client: AsyncAidboxClient):
+        await client.resource(
             "Bundle",
             type="transaction",
             entry=[
@@ -103,7 +92,7 @@ class SDK(object):
             ],
         ).save()
 
-    async def _create_seed_resources(self):
+    async def _create_seed_resources(self, client: AsyncAidboxClient):
         entries = []
         for entity, resources in self._seeds.items():
             for resource_id, resource in resources.items():
@@ -123,7 +112,7 @@ class SDK(object):
                     "url": "/{0}?_id={1}".format(entity, resource_id),
                 }
                 entries.append(entry)
-        bundle = self.client.resource("Bundle", type="transaction", entry=entries)
+        bundle = client.resource("Bundle", type="transaction", entry=entries)
         await bundle.save()
 
     def build_manifest(self):
