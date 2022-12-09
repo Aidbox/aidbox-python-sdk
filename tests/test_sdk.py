@@ -64,6 +64,7 @@ async def test_appointment_sub(client, aidbox):
         }
         assert expected["resource"].items() <= event["resource"].items()
 
+
 @pytest.mark.asyncio
 async def test_database_isolation__1(aidbox_client, safe_db):
     patients = await aidbox_client.resources("Patient").fetch_all()
