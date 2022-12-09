@@ -126,7 +126,7 @@ class SDK(object):
             path = func.__name__
             self._subscriptions[entity] = {"handler": path}
 
-            async def handler(event):
+            async def handler(event, request):
                 if self._test_start_txid is not None:
                     # Skip outside test
                     if self._test_start_txid == -1:
@@ -135,7 +135,7 @@ class SDK(object):
                     # Skip inside another test
                     if int(event["tx"]["id"]) < self._test_start_txid:
                         return
-                coro_or_result = func(event)
+                coro_or_result = func(event, request)
                 if asyncio.iscoroutine(coro_or_result):
                     result = await coro_or_result
                 else:

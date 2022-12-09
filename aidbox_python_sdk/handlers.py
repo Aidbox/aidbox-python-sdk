@@ -19,7 +19,7 @@ async def subscription(request, data):
     if not handler:
         logger.error("Subscription handler `{}` was not found".format(data["handler"]))
         raise web.HTTPNotFound()
-    result = handler(data["event"])
+    result = handler(data["event"], request)
     if asyncio.iscoroutine(result):
         asyncio.get_event_loop().create_task(result)
     return web.json_response({})
