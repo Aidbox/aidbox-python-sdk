@@ -13,7 +13,7 @@ from main import create_app as _create_app
 
 async def start_app(aiohttp_client):
     app = await aiohttp_client(
-        await _create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081}
+        _create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081}
     )
     sdk = app.server.app["sdk"]
     sdk._test_start_txid = -1

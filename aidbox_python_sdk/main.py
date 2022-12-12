@@ -5,11 +5,12 @@ import os
 import sys
 from pathlib import Path
 
-from aidboxpy import AsyncAidboxClient
 from aiohttp import BasicAuth, ClientSession, client_exceptions, web
 
+from .aidboxpy import AsyncAidboxClient
 from .db import DBProxy
 from .handlers import routes
+from .sdk import SDK
 
 logger = logging.getLogger("aidbox_sdk")
 THIS_DIR = Path(__file__).parent
@@ -20,26 +21,28 @@ def setup_routes(app):
     app.add_routes(routes)
 
 
-async def init_aidbox(app):
+async def register_app(
+    sdk: SDK, *, http_client: ClientSession, aidbox_client: AsyncAidboxClient
+):
     try:
-        async with app["init_http_client"].put(
-            "{}/App".format(app["settings"].APP_INIT_URL),
+        async with http_client.put(
+            "{}/App".format(sdk.settings.APP_INIT_URL),
             json={
                 "resourceType": "App",
                 "apiVersion": 1,
                 "type": "app",
-                "id": app["settings"].APP_ID,
+                "id": sdk.settings.APP_ID,
                 "endpoint": {
-                    "url": app["settings"].APP_URL,
+                    "url": sdk.settings.APP_URL,
                     "type": "http-rpc",
-                    "secret": app["settings"].APP_SECRET,
+                    "secret": sdk.settings.APP_SECRET,
                 },
-                **app["sdk"].build_manifest(),
+                **sdk.build_manifest(),
             },
         ) as resp:
             if 200 <= resp.status < 300:
                 logger.info("Initializing Aidbox app...")
-                await app["sdk"].initialize(app["client"])
+                await sdk.initialize(aidbox_client)
             else:
                 logger.error(
                     "Aidbox app initialized failed. "
@@ -53,17 +56,17 @@ async def init_aidbox(app):
         client_exceptions.ClientConnectionError,
     ):
         logger.error(
-            "Aidbox address is unreachable {}".format(app["settings"].APP_INIT_URL)
+            "Aidbox address is unreachable {}".format(sdk.settings.APP_INIT_URL)
         )
         sys.exit(errno.EINTR)
 
 
-async def wait_aidbox(app):
-    address = app["settings"].APP_URL
+async def wait_aidbox(sdk: SDK, http_client: ClientSession):
+    address = sdk.settings.APP_URL
     logger.debug("Check availability of {}".format(address))
     while 1:
         try:
-            async with app["init_http_client"].get(address, timeout=5):
+            async with http_client.get(address, timeout=5):
                 pass
             break
         except (
@@ -75,9 +78,11 @@ async def wait_aidbox(app):
 
 
 async def wait_and_init_aidbox(app):
-    await wait_aidbox(app)
+    await wait_aidbox(app["sdk"], app["init_http_client"])
     await app["db"].initialize()
-    await init_aidbox(app)
+    await register_app(
+        app["sdk"], http_client=app["init_http_client"], aidbox_client=app["client"]
+    )
 
 
 async def init_http_client(app):
@@ -93,12 +98,14 @@ async def init_aidbox_client(app):
         login=app["settings"].APP_INIT_CLIENT_ID,
         password=app["settings"].APP_INIT_CLIENT_SECRET,
     )
+
     app["client"] = AsyncAidboxClient(
         "{}".format(app["settings"].APP_INIT_URL), authorization=basic_auth.encode()
     )
 
 
 async def init_db(app):
+    # TODO: make DBProxy independent from the App
     app["db"] = DBProxy(app["settings"])
 
 
@@ -121,7 +128,7 @@ async def on_shutdown(app):
         await app["init_http_client"].close()
 
 
-async def create_app(settings, sdk, debug=False):
+def create_app(sdk: SDK):
     sdk.is_ready = asyncio.Future()
     app = web.Application()
     app.on_startup.append(on_startup)
@@ -129,10 +136,8 @@ async def create_app(settings, sdk, debug=False):
     app.on_shutdown.append(on_shutdown)
     app.update(
         name="aidbox-python-sdk",
-        settings=settings,
+        settings=sdk.settings,
         sdk=sdk,
-        init_aidbox_app=init_aidbox,
-        livereload=True,
     )
     setup_routes(app)
     return app

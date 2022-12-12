@@ -86,6 +86,7 @@ class DBProxy(object):
             password=self._settings.APP_INIT_CLIENT_SECRET,
         )
         self._client = ClientSession(auth=basic_auth)
+        # TODO: remove _init_table_cache
         await self._init_table_cache()
 
     async def deinitialize(self):

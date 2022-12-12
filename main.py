@@ -61,8 +61,8 @@ seeds = {
 sdk = SDK(settings, resources=resources, seeds=seeds)
 
 
-async def create_app():
-    return await _create_app(settings, sdk, debug=True)
+def create_app():
+    return _create_app(sdk)
 
 
 @sdk.subscription("Appointment")

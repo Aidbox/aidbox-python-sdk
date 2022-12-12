@@ -3,9 +3,9 @@ import logging
 import os
 
 import jsonschema
-from aidboxpy import AsyncAidboxClient
 from fhirpy.base.exceptions import OperationOutcome
 
+from .aidboxpy import AsyncAidboxClient
 from .db_migrations import sdk_migrations
 
 logger = logging.getLogger("aidbox_sdk")
@@ -20,10 +20,8 @@ class SDK(object):
         resources=None,
         seeds=None,
         migrations=None,
-        on_ready=None,
-        on_deinitialize=None
     ):
-        self._settings = settings
+        self.settings = settings
         self._subscriptions = {}
         self._subscription_handlers = {}
         self._operations = {}
@@ -43,12 +41,10 @@ class SDK(object):
         self._entities = entities or {}
         self._seeds = seeds or {}
         self._migrations = migrations or []
-        self._on_ready = on_ready
-        self._on_deinitialize = on_deinitialize
         self._app_endpoint_name = "{}-endpoint".format(settings.APP_ID)
         self._initialized = False
         self._sub_triggered = {}
-        self.is_ready = asyncio.Future()
+        self.is_ready = None
         self._test_start_txid = None
 
     async def initialize(self, client: AsyncAidboxClient):
@@ -58,9 +54,6 @@ class SDK(object):
         self._initialized = True
         logger.info("Aidbox app successfully initialized")
 
-        if callable(self._on_ready):
-            await self._on_ready()
-
         self.is_ready.set_result(True)
 
     async def deinitialize(self):
@@ -68,9 +61,6 @@ class SDK(object):
             return
 
         self._initialized = False
-
-        if callable(self._on_deinitialize):
-            await self._on_deinitialize()
 
     def is_initialized(self):
         return self._initialized
