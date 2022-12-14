@@ -6,12 +6,13 @@ import os
 import sys
 from pathlib import Path
 
-from aiohttp import BasicAuth, ClientSession, client_exceptions, web
+from aiohttp import BasicAuth, client_exceptions, web
 
 from .aidboxpy import AsyncAidboxClient
 from .db import DBProxy
 from .handlers import routes
 from .sdk import SDK
+from .settings import Settings
 from fhirpy.base.exceptions import OperationOutcome
 
 logger = logging.getLogger("aidbox_sdk")
@@ -36,21 +37,18 @@ async def register_app(sdk: SDK, client: AsyncAidboxClient):
                 "secret": sdk.settings.APP_SECRET,
             },
             **sdk.build_manifest(),
-        }
+        },
     )
     try:
-        try:
-            await app_resource.save()
-            logger.info("Creating seeds and applying migrations")
-            await sdk.handle_seeds_and_migrations(client)
-            logger.info("Aidbox app successfully registered")
-        except OperationOutcome as error:
-            logger.error(
-                "Error during the App registration: {}".format(
-                    json.dumps(error, indent=2)
-                )
-            )
-            sys.exit(errno.EINTR)
+        await app_resource.save()
+        logger.info("Creating seeds and applying migrations")
+        await sdk.handle_seeds_and_migrations(client)
+        logger.info("Aidbox app successfully registered")
+    except OperationOutcome as error:
+        logger.error(
+            "Error during the App registration: {}".format(json.dumps(error, indent=2))
+        )
+        sys.exit(errno.EINTR)
     except (
         client_exceptions.ServerDisconnectedError,
         client_exceptions.ClientConnectionError,
@@ -61,38 +59,29 @@ async def register_app(sdk: SDK, client: AsyncAidboxClient):
         sys.exit(errno.EINTR)
 
 
-async def init_client(app):
+async def init_client(settings: Settings):
     basic_auth = BasicAuth(
-        login=app["settings"].APP_INIT_CLIENT_ID,
-        password=app["settings"].APP_INIT_CLIENT_SECRET,
+        login=settings.APP_INIT_CLIENT_ID,
+        password=settings.APP_INIT_CLIENT_SECRET,
     )
 
-    app["client"] = AsyncAidboxClient(
-        "{}".format(app["settings"].APP_INIT_URL), authorization=basic_auth.encode()
+    return AsyncAidboxClient(
+        "{}".format(settings.APP_INIT_URL), authorization=basic_auth.encode()
     )
 
 
-async def init_db(app):
-    # TODO: make DBProxy independent from the App
+async def init(app):
+    app["client"] = await init_client(app["settings"])
     app["db"] = DBProxy(app["settings"])
     await app["db"].initialize()
-
-
-async def on_startup(app):
-    await init_client(app)
-    await init_db(app)
-
     await register_app(app["sdk"], app["client"])
-
-
-async def on_cleanup(app):
+    yield
     await app["db"].deinitialize()
 
 
 def create_app(sdk: SDK):
     app = web.Application()
-    app.on_startup.append(on_startup)
-    app.on_cleanup.append(on_cleanup)
+    app.cleanup_ctx.append(init)
     app.update(
         settings=sdk.settings,
         sdk=sdk,
