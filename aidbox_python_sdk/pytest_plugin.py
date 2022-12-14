@@ -18,7 +18,6 @@ async def start_app(aiohttp_client):
     sdk = app.server.app["sdk"]
     sdk._test_start_txid = -1
 
-    await sdk.is_ready
     return app
 
 

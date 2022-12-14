@@ -42,7 +42,8 @@ async def register_app(sdk: SDK, client: AsyncAidboxClient):
         try:
             await app_resource.save()
             logger.info("Creating seeds and applying migrations")
-            await sdk.initialize(client)
+            await sdk.handle_seeds_and_migrations(client)
+            logger.info("Aidbox app successfully registered")
         except OperationOutcome as error:
             logger.error(
                 "Error during the App registration: {}".format(
@@ -86,11 +87,9 @@ async def on_startup(app):
 
 async def on_cleanup(app):
     await app["db"].deinitialize()
-    await app["sdk"].deinitialize()
 
 
 def create_app(sdk: SDK):
-    sdk.is_ready = asyncio.Future()
     app = web.Application()
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)

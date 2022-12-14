@@ -20,4 +20,4 @@ sdk = SDK(
     ["GET"], ["healthcheck"], public=True,
 )
 async def healthcheck(operation, request):
-    return web.json_response({"is_ready": sdk.is_ready.result()})
+    return web.json_response({"is_ready": True})

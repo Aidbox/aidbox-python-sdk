@@ -10,8 +10,6 @@ routes = web.RouteTableDef()
 
 async def subscription(request, data):
     logger.debug("Subscription handler: {}".format(data["handler"]))
-    if not request.app["sdk"].is_initialized():
-        raise web.HTTPServiceUnavailable()
     if "handler" not in data or "event" not in data:
         logger.error("`handler` and/or `event` param is missing, data: {}".format(data))
         raise web.HTTPBadRequest()
@@ -27,8 +25,6 @@ async def subscription(request, data):
 
 async def operation(request, data):
     logger.debug("Operation handler: %s", data["operation"]["id"])
-    if not request.app["sdk"].is_initialized():
-        raise web.HTTPServiceUnavailable()
     if "operation" not in data or "id" not in data["operation"]:
         logger.error(
             "`operation` or `operation[id]` param is missing, data: %s", data
@@ -83,6 +79,4 @@ async def health_check(request):
 
 @routes.get("/live")
 async def live_health_check(request):
-    if not request.app["sdk"].is_initialized():
-        raise web.HTTPServiceUnavailable()
     return web.json_response({"status": "OK"}, status=200)

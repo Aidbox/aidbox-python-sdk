@@ -42,28 +42,12 @@ class SDK(object):
         self._seeds = seeds or {}
         self._migrations = migrations or []
         self._app_endpoint_name = "{}-endpoint".format(settings.APP_ID)
-        self._initialized = False
         self._sub_triggered = {}
-        self.is_ready = None
         self._test_start_txid = None
 
-    async def initialize(self, client: AsyncAidboxClient):
+    async def handle_seeds_and_migrations(self, client: AsyncAidboxClient):
         await self._create_seed_resources(client)
         await self._apply_migrations(client)
-
-        self._initialized = True
-        logger.info("Aidbox app successfully initialized")
-
-        self.is_ready.set_result(True)
-
-    async def deinitialize(self):
-        if not self.is_initialized():
-            return
-
-        self._initialized = False
-
-    def is_initialized(self):
-        return self._initialized
 
     async def _apply_migrations(self, client: AsyncAidboxClient):
         await client.resource(
@@ -171,7 +155,13 @@ class SDK(object):
         return self.was_subscription_triggered_n_times(entity, 1)
 
     def operation(
-        self, methods, path, public=False, access_policy=None, request_schema=None, timeout=None
+        self,
+        methods,
+        path,
+        public=False,
+        access_policy=None,
+        request_schema=None,
+        timeout=None,
     ):
         if public == True and access_policy is not None:
             raise ValueError(
@@ -207,7 +197,7 @@ class SDK(object):
                 self._operations[operation_id] = {
                     "method": method,
                     "path": path,
-                    **({"timeout": timeout} if timeout else {})
+                    **({"timeout": timeout} if timeout else {}),
                 }
                 self._operation_handlers[operation_id] = wrapped_func
                 if public is True:
@@ -253,11 +243,7 @@ def validate_request(request_validator, request):
         raise OperationOutcome(
             resource={
                 "resourceType": "OperationOutcome",
-
-                "text": {
-                    "status": "generated",
-                    "div": "Invalid request"
-                },
+                "text": {"status": "generated", "div": "Invalid request"},
                 "issue": [
                     {
                         "severity": "fatal",
@@ -266,6 +252,6 @@ def validate_request(request_validator, request):
                         "diagnostics": ve.message,
                     }
                     for ve in errors
-                ]
+                ],
             }
         )
