@@ -95,7 +95,6 @@ def create_app(sdk: SDK):
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)
     app.update(
-        name="aidbox-python-sdk",
         settings=sdk.settings,
         sdk=sdk,
     )
