@@ -61,30 +61,6 @@ async def register_app(
         sys.exit(errno.EINTR)
 
 
-async def wait_aidbox(sdk: SDK, http_client: ClientSession):
-    address = sdk.settings.APP_URL
-    logger.debug("Check availability of {}".format(address))
-    while 1:
-        try:
-            async with http_client.get(address, timeout=5):
-                pass
-            break
-        except (
-            asyncio.TimeoutError,
-            client_exceptions.InvalidURL,
-            client_exceptions.ClientConnectionError,
-        ):
-            await asyncio.sleep(2)
-
-
-async def wait_and_init_aidbox(app):
-    await wait_aidbox(app["sdk"], app["init_http_client"])
-    await app["db"].initialize()
-    await register_app(
-        app["sdk"], http_client=app["init_http_client"], aidbox_client=app["client"]
-    )
-
-
 async def init_http_client(app):
     basic_auth = BasicAuth(
         login=app["settings"].APP_INIT_CLIENT_ID,
@@ -107,6 +83,7 @@ async def init_aidbox_client(app):
 async def init_db(app):
     # TODO: make DBProxy independent from the App
     app["db"] = DBProxy(app["settings"])
+    await app["db"].initialize()
 
 
 async def on_startup(app):
@@ -114,7 +91,9 @@ async def on_startup(app):
     await init_aidbox_client(app)
     await init_db(app)
 
-    asyncio.get_event_loop().create_task(wait_and_init_aidbox(app))
+    await register_app(
+        app["sdk"], http_client=app["init_http_client"], aidbox_client=app["client"]
+    )
 
 
 async def on_cleanup(app):
