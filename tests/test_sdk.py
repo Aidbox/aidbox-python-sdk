@@ -9,7 +9,7 @@ import main
 
 @pytest.mark.asyncio
 async def test_health_check(client):
-    resp = await client.get("/")
+    resp = await client.get("/health")
     assert resp.status == 200
     json = await resp.json()
     assert json == {"status": "OK"}

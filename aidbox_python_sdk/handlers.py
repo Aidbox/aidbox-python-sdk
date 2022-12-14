@@ -54,7 +54,7 @@ TYPES = {
 }
 
 
-@routes.post("/")
+@routes.post("/aidbox")
 async def dispatch(request):
     logger.debug("Dispatch new request {} {}".format(request.method, request.url))
     json = await request.json()
@@ -72,7 +72,7 @@ async def dispatch(request):
     return web.json_response(req, status=200)
 
 
-@routes.get("/")
+@routes.get("/health")
 async def health_check(request):
     return web.json_response({"status": "OK"}, status=200)
 

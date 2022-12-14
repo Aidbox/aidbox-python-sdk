@@ -31,7 +31,7 @@ async def register_app(sdk: SDK, client: AsyncAidboxClient):
             "type": "app",
             "id": sdk.settings.APP_ID,
             "endpoint": {
-                "url": sdk.settings.APP_URL,
+                "url": f"{sdk.settings.APP_URL}/aidbox",
                 "type": "http-rpc",
                 "secret": sdk.settings.APP_SECRET,
             },
