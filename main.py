@@ -61,27 +61,27 @@ seeds = {
 sdk = SDK(settings, resources=resources, seeds=seeds)
 
 
-async def create_app():
-    return await _create_app(settings, sdk, debug=True)
+def create_app():
+    return _create_app(sdk)
 
 
 @sdk.subscription("Appointment")
-async def appointment_sub(event):
+async def appointment_sub(event, request):
     """
     POST /Appointment
     """
     await asyncio.sleep(5)
-    return await _appointment_sub(event)
+    return await _appointment_sub(event, request)
 
 
-async def _appointment_sub(event):
+async def _appointment_sub(event, request):
     participants = event["resource"]["participant"]
     patient_id = next(
         p["actor"]["id"]
         for p in participants
         if p["actor"]["resourceType"] == "Patient"
     )
-    patient = await sdk.client.resources("Patient").get(id=patient_id)
+    patient = await request.app["client"].resources("Patient").get(id=patient_id)
     patient_name = "{} {}".format(
         patient["name"][0]["given"][0], patient["name"][0]["family"]
     )
@@ -125,7 +125,7 @@ async def daily_patient_report(operation, request):
     GET /Patient/$weekly-report
     GET /Patient/$daily-report
     """
-    patients = sdk.client.resources("Patient")
+    patients = request.app["client"].resources("Patient")
     async for p in patients:
         logging.debug(p.serialize())
     logging.debug("`daily_patient_report` operation handler")
@@ -138,7 +138,7 @@ async def daily_patient_report(operation, request):
 
 @routes.get("/db_tests")
 async def db_tests(request):
-    db = sdk.db
+    db = request.app["db"]
     app = db.App.__table__
     app_res = {
         "type": "app",

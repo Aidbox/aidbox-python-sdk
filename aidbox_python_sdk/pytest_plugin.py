@@ -12,21 +12,19 @@ from main import create_app as _create_app
 
 
 async def start_app(aiohttp_client):
-
     app = await aiohttp_client(
-        await _create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081}
+        _create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081}
     )
     sdk = app.server.app["sdk"]
     sdk._test_start_txid = -1
 
-    await sdk.is_ready
     return app
 
 
 @pytest.fixture
-def client(loop, aiohttp_client):
+def client(event_loop, aiohttp_client):
     """Instance of app's server and client"""
-    return loop.run_until_complete(start_app(aiohttp_client))
+    return event_loop.run_until_complete(start_app(aiohttp_client))
 
 
 class AidboxSession(ClientSession):
@@ -78,6 +76,12 @@ async def safe_db(aidbox, client):
         raise_for_status=True,
     )
 
+
 @pytest.fixture
 def sdk(client):
     return client.server.app["sdk"]
+
+
+@pytest.fixture
+def aidbox_client(client):
+    return client.server.app["client"]
