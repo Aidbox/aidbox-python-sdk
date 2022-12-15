@@ -41,7 +41,7 @@ services:
       retries: 100
   app:
     build: ./
-    command: ["pytest"]
+    command: ["pipenv", "run", "pytest"]
     depends_on:
       devbox-healthcheck:
         condition:
