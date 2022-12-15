@@ -10,8 +10,6 @@ routes = web.RouteTableDef()
 
 async def subscription(request, data):
     logger.debug("Subscription handler: {}".format(data["handler"]))
-    if not request.app["sdk"].is_initialized():
-        raise web.HTTPServiceUnavailable()
     if "handler" not in data or "event" not in data:
         logger.error("`handler` and/or `event` param is missing, data: {}".format(data))
         raise web.HTTPBadRequest()
@@ -19,7 +17,7 @@ async def subscription(request, data):
     if not handler:
         logger.error("Subscription handler `{}` was not found".format(data["handler"]))
         raise web.HTTPNotFound()
-    result = handler(data["event"])
+    result = handler(data["event"], request)
     if asyncio.iscoroutine(result):
         asyncio.get_event_loop().create_task(result)
     return web.json_response({})
@@ -27,8 +25,6 @@ async def subscription(request, data):
 
 async def operation(request, data):
     logger.debug("Operation handler: %s", data["operation"]["id"])
-    if not request.app["sdk"].is_initialized():
-        raise web.HTTPServiceUnavailable()
     if "operation" not in data or "id" not in data["operation"]:
         logger.error(
             "`operation` or `operation[id]` param is missing, data: %s", data
@@ -58,7 +54,7 @@ TYPES = {
 }
 
 
-@routes.post("/")
+@routes.post("/aidbox")
 async def dispatch(request):
     logger.debug("Dispatch new request {} {}".format(request.method, request.url))
     json = await request.json()
@@ -76,13 +72,11 @@ async def dispatch(request):
     return web.json_response(req, status=200)
 
 
-@routes.get("/")
+@routes.get("/health")
 async def health_check(request):
     return web.json_response({"status": "OK"}, status=200)
 
 
 @routes.get("/live")
 async def live_health_check(request):
-    if not request.app["sdk"].is_initialized():
-        raise web.HTTPServiceUnavailable()
     return web.json_response({"status": "OK"}, status=200)

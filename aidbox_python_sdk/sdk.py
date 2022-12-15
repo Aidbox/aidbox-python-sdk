@@ -3,11 +3,9 @@ import logging
 import os
 
 import jsonschema
-from aidboxpy import AsyncAidboxClient
-from aiohttp import BasicAuth, ClientSession
-from fhirpy.base.exceptions import OperationOutcome, ResourceNotFound
+from fhirpy.base.exceptions import OperationOutcome
 
-from .db import DBProxy
+from .aidboxpy import AsyncAidboxClient
 from .db_migrations import sdk_migrations
 
 logger = logging.getLogger("aidbox_sdk")
@@ -22,10 +20,8 @@ class SDK(object):
         resources=None,
         seeds=None,
         migrations=None,
-        on_ready=None,
-        on_deinitialize=None
     ):
-        self._settings = settings
+        self.settings = settings
         self._subscriptions = {}
         self._subscription_handlers = {}
         self._operations = {}
@@ -45,54 +41,12 @@ class SDK(object):
         self._entities = entities or {}
         self._seeds = seeds or {}
         self._migrations = migrations or []
-        self._on_ready = on_ready
-        self._on_deinitialize = on_deinitialize
         self._app_endpoint_name = "{}-endpoint".format(settings.APP_ID)
-        self._initialized = False
         self._sub_triggered = {}
-        self.is_ready = asyncio.Future()
-        self.client = None
-        self.db = DBProxy(self._settings)
         self._test_start_txid = None
 
-    async def initialize(self):
-        await self._init_aidbox_client()
-        await self._create_seed_resources()
-        await self._apply_migrations()
-        await self.db.initialize()
-
-        self._initialized = True
-        logger.info("Aidbox app successfully initialized")
-
-        if callable(self._on_ready):
-            await self._on_ready()
-
-        self.is_ready.set_result(True)
-
-    async def deinitialize(self):
-        if not self.is_initialized():
-            return
-
-        await self.db.deinitialize()
-        self._initialized = False
-
-        if callable(self._on_deinitialize):
-            await self._on_deinitialize()
-
-    def is_initialized(self):
-        return self._initialized
-
-    async def _init_aidbox_client(self):
-        basic_auth = BasicAuth(
-            login=self._settings.APP_INIT_CLIENT_ID,
-            password=self._settings.APP_INIT_CLIENT_SECRET,
-        )
-        self.client = AsyncAidboxClient(
-            "{}".format(self._settings.APP_INIT_URL), authorization=basic_auth.encode()
-        )
-
-    async def _apply_migrations(self):
-        await self.client.resource(
+    async def apply_migrations(self, client: AsyncAidboxClient):
+        await client.resource(
             "Bundle",
             type="transaction",
             entry=[
@@ -103,7 +57,7 @@ class SDK(object):
             ],
         ).save()
 
-    async def _create_seed_resources(self):
+    async def create_seed_resources(self, client: AsyncAidboxClient):
         entries = []
         for entity, resources in self._seeds.items():
             for resource_id, resource in resources.items():
@@ -123,7 +77,7 @@ class SDK(object):
                     "url": "/{0}?_id={1}".format(entity, resource_id),
                 }
                 entries.append(entry)
-        bundle = self.client.resource("Bundle", type="transaction", entry=entries)
+        bundle = client.resource("Bundle", type="transaction", entry=entries)
         await bundle.save()
 
     def build_manifest(self):
@@ -142,7 +96,7 @@ class SDK(object):
             path = func.__name__
             self._subscriptions[entity] = {"handler": path}
 
-            async def handler(event):
+            async def handler(event, request):
                 if self._test_start_txid is not None:
                     # Skip outside test
                     if self._test_start_txid == -1:
@@ -151,7 +105,7 @@ class SDK(object):
                     # Skip inside another test
                     if int(event["tx"]["id"]) < self._test_start_txid:
                         return
-                coro_or_result = func(event)
+                coro_or_result = func(event, request)
                 if asyncio.iscoroutine(coro_or_result):
                     result = await coro_or_result
                 else:
@@ -197,7 +151,13 @@ class SDK(object):
         return self.was_subscription_triggered_n_times(entity, 1)
 
     def operation(
-        self, methods, path, public=False, access_policy=None, request_schema=None, timeout=None
+        self,
+        methods,
+        path,
+        public=False,
+        access_policy=None,
+        request_schema=None,
+        timeout=None,
     ):
         if public == True and access_policy is not None:
             raise ValueError(
@@ -233,7 +193,7 @@ class SDK(object):
                 self._operations[operation_id] = {
                     "method": method,
                     "path": path,
-                    **({"timeout": timeout} if timeout else {})
+                    **({"timeout": timeout} if timeout else {}),
                 }
                 self._operation_handlers[operation_id] = wrapped_func
                 if public is True:
@@ -279,11 +239,7 @@ def validate_request(request_validator, request):
         raise OperationOutcome(
             resource={
                 "resourceType": "OperationOutcome",
-
-                "text": {
-                    "status": "generated",
-                    "div": "Invalid request"
-                },
+                "text": {"status": "generated", "div": "Invalid request"},
                 "issue": [
                     {
                         "severity": "fatal",
@@ -292,6 +248,6 @@ def validate_request(request_validator, request):
                         "diagnostics": ve.message,
                     }
                     for ve in errors
-                ]
+                ],
             }
         )
