@@ -42,7 +42,8 @@ async def register_app(sdk: SDK, client: AsyncAidboxClient):
     try:
         await app_resource.save()
         logger.info("Creating seeds and applying migrations")
-        await sdk.handle_seeds_and_migrations(client)
+        await sdk.create_seed_resources(client)
+        await sdk.apply_migrations(client)
         logger.info("Aidbox app successfully registered")
     except OperationOutcome as error:
         logger.error(

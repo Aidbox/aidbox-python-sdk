@@ -45,11 +45,7 @@ class SDK(object):
         self._sub_triggered = {}
         self._test_start_txid = None
 
-    async def handle_seeds_and_migrations(self, client: AsyncAidboxClient):
-        await self._create_seed_resources(client)
-        await self._apply_migrations(client)
-
-    async def _apply_migrations(self, client: AsyncAidboxClient):
+    async def apply_migrations(self, client: AsyncAidboxClient):
         await client.resource(
             "Bundle",
             type="transaction",
@@ -61,7 +57,7 @@ class SDK(object):
             ],
         ).save()
 
-    async def _create_seed_resources(self, client: AsyncAidboxClient):
+    async def create_seed_resources(self, client: AsyncAidboxClient):
         entries = []
         for entity, resources in self._seeds.items():
             for resource_id, resource in resources.items():
