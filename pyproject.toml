@@ -6,3 +6,27 @@ testpaths = [
 ]
 log_cli = true
 log_cli_level = "INFO"
+
+[tool.autohooks]
+mode = "pipenv"
+pre-commit = ["autohooks.plugins.black", "autohooks.plugins.isort"]
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+exclude = '''
+(
+  /(
+    | \.git
+    | \.pytest_cache
+  )/
+)
+'''
+
+[tool.isort]
+profile = "black"
+use_parentheses = true
+line_length = 100
+skip = [".gitignore"]
+default_section = "THIRDPARTY"
+known_first_party = ["app"]
