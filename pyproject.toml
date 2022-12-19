@@ -29,7 +29,7 @@ line_length = 100
 skip = [".gitignore"]
 
 [tool.setuptools]
-zip_safe = false
+zip-safe = false
 packages = ["aidbox_python_sdk"]
 
 [tool.setuptools.dynamic]
