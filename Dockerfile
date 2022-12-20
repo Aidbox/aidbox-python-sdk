@@ -1,9 +1,15 @@
 FROM python:3.11
+RUN pip install pipenv
+
 RUN mkdir /app
 WORKDIR /app
 
-COPY ./requirements ./requirements
-RUN pip install --no-cache-dir -r ./requirements/base.txt -r ./requirements/dev.txt
+COPY Pipfile Pipfile.lock ./
+RUN pipenv install --dev
+
+# SQLAlchemy vulnerability - https://pyup.io/v/51668/742
+# Remove ignore option once fix is released or upgrade to version 2
+RUN pipenv check -i 51668
 COPY . .
 
 EXPOSE 8081
