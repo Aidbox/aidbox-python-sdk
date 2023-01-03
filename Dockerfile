@@ -1,4 +1,5 @@
-FROM python:${PYTHON}
+ARG PYTHON_VERSION
+FROM python:$PYTHON_VERSION
 RUN pip install pipenv
 
 RUN mkdir /app
