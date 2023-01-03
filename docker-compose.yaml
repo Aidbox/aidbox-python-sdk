@@ -25,6 +25,7 @@ services:
       PGUSER: postgres
       PGPASSWORD: postgres
       AIDBOX_CONFIG: /var/config/config.edn
+      AIDBOX_LICENSE: ${AIDBOX_LICENSE}
     volumes:
       - ./config:/var/config
   devbox-healthcheck:
