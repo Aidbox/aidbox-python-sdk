@@ -17,7 +17,7 @@ jobs:
 
     env:
       PYTHON: ${{ matrix.python-version }}
-
+      AIDBOX_LICENSE: ${{ secrets.AIDBOX_LICENSE}}
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}

@@ -17,7 +17,7 @@ services:
     ports:
       - "8080:8080"
     env_file:
-    - .env
+    - env_tests
     environment:
       PGHOST: database
       PGDATABASE: devbox
@@ -49,7 +49,9 @@ services:
     links:
      - devbox
     env_file:
-     - .env
+     - env_tests
+    environment:
+      - PYTHON=${PYTHON}
     ports:
      - "8081:8081"
     volumes:
