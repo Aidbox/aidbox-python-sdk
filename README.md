@@ -1,13 +1,13 @@
 # aidbox-python-sdk
 
-1. Create a python 3.6+  environment `python3 -m venv env`
+1. Create a python 3.8+ environment `pyenv `
 2. Set env variables and activate virtual environment `source activate_settings.sh`
-2. Install the required packages with `pip install -r requirements/base.txt -r requirements/dev.txt`
+2. Install the required packages with `pipenv install --dev`
 3. Make sure the app's settings are configured correctly (see `activate_settings.sh` and `aidbox_python_sdk/settings.py`). You can also
  use environment variables to define sensitive settings, eg. DB connection variables (see example `.env-ptl`)
 4. You can then run example with `python example.py`.
 
-Add `APP_FAST_START_MODE=TRUE` to .env for fast start mode.
+Add `APP_FAST_START_MODE=TRUE` to env_tests for fast start mode.
 
 # Getting started
 ## Minimal application
@@ -20,7 +20,7 @@ settings = Settings(**{})
 sdk = SDK(settings, resources=resources, seeds=seeds)
 
 async def create_app():
-    return await _create_app(settings, sdk, debug=True)
+    return await _create_app(sdk)
 
 ```
 

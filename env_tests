@@ -1,7 +1,3 @@
-# Visit https://aidbox.app/ui/portal to get a licence key
-AIDBOX_LICENSE=
-
-# comment to get unsecured box
 AIDBOX_CLIENT_ID=root
 AIDBOX_CLIENT_SECRET=secret
 AIDBOX_BASE_URL=http://devbox:8080
@@ -23,3 +19,5 @@ AIO_APP_PATH=.
 
 OPENID_RSA=/var/config/jwtRS256.key
 OPENID_RSA_PUB=/var/config/jwtRS256.key.pub
+
+AIDBOX_STDOUT_PRETTY=debug

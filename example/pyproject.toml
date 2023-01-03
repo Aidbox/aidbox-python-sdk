@@ -26,3 +26,11 @@ known_first_party = ["app"]
 [tool.autohooks]
 mode = "pythonpath"
 pre-commit = ["autohooks.plugins.black", "autohooks.plugins.isort"]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --color=yes --junitxml=report.xml --cov-report html --cov-report term:skip-covered --doctest-modules"
+testpaths = ["tests"]
+log_cli = true
+log_cli_level = "INFO"
+norecursedirs = "embed"

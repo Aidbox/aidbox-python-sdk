@@ -20,6 +20,3 @@ isort = "~=5.11.2"
 autohooks = "~=22.11.2"
 autohooks-plugin-isort = "~=22.8.0"
 autohooks-plugin-black = "~=22.11.0"
-
-[requires]
-python_version = "3.11"
