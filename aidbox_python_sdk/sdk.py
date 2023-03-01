@@ -27,12 +27,11 @@ class SDK(object):
         self._operations = {}
         self._operation_handlers = {}
         self._manifest = {
-            "id": settings.APP_ID,
-            "resourceType": "App",
-            "type": "app",
             "apiVersion": 1,
+            "type": "app",
+            "id": settings.APP_ID,
             "endpoint": {
-                "url": settings.APP_URL,
+                "url": f"{settings.APP_URL}/aidbox",
                 "type": "http-rpc",
                 "secret": settings.APP_SECRET,
             },

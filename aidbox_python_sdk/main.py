@@ -27,17 +27,7 @@ def setup_routes(app):
 async def register_app(sdk: SDK, client: AsyncAidboxClient):
     app_resource = client.resource(
         "App",
-        **{
-            "apiVersion": 1,
-            "type": "app",
-            "id": sdk.settings.APP_ID,
-            "endpoint": {
-                "url": f"{sdk.settings.APP_URL}/aidbox",
-                "type": "http-rpc",
-                "secret": sdk.settings.APP_SECRET,
-            },
-            **sdk.build_manifest(),
-        },
+        **sdk.build_manifest() ,
     )
     try:
         await app_resource.save()
