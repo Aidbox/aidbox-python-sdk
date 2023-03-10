@@ -51,12 +51,13 @@ async def register_app(sdk: SDK, client: AsyncAidboxClient):
 
 
 async def init_client(settings: Settings):
+    AidboxClient = settings.AIDBOX_CLIENT_CLASS
     basic_auth = BasicAuth(
         login=settings.APP_INIT_CLIENT_ID,
         password=settings.APP_INIT_CLIENT_SECRET,
     )
 
-    return AsyncAidboxClient(
+    return AidboxClient(
         "{}".format(settings.APP_INIT_URL), authorization=basic_auth.encode()
     )
 

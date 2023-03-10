@@ -35,6 +35,7 @@ async def operation(request, data):
         logger.error("Operation handler `%s` was not found", data["handler"])
         raise web.HTTPNotFound()
     try:
+        data["request"]["app"] = request.app
         result = handler(data["operation"], data["request"])
         if asyncio.iscoroutine(result):
             try:

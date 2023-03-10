@@ -1,6 +1,8 @@
 import os
 from pathlib import Path
 
+from .aidboxpy import AsyncAidboxClient
+
 
 class Required:
     def __init__(self, v_type=None):
@@ -30,6 +32,7 @@ class Settings:
     APP_SECRET = Required(v_type=str)
     AIO_HOST = Required(v_type=str)
     AIO_PORT = Required(v_type=str)
+    AIDBOX_CLIENT_CLASS = AsyncAidboxClient
 
     def __init__(self, **custom_settings):
         """
