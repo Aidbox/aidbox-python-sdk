@@ -25,19 +25,20 @@ def setup_routes(app):
 
 
 async def register_app(sdk: SDK, client: AsyncAidboxClient):
-    app_resource = client.resource(
-        "App",
-        **sdk.build_manifest() ,
-    )
+    app_manifest = sdk.build_manifest()
+    
     try:
-        await app_resource.save()
+        # We create app directly using execute to avoid conversion
+        await client.execute(
+            f"/App/{app_manifest.id}", method="put", data=app_manifest)
+        
         logger.info("Creating seeds and applying migrations")
         await sdk.create_seed_resources(client)
         await sdk.apply_migrations(client)
         logger.info("Aidbox app successfully registered")
     except OperationOutcome as error:
         logger.error(
-            "Error during the App registration: {}".format(json.dumps(error, indent=2))
+            "Error during the App registration: %s", json.dumps(error, indent=2)
         )
         sys.exit(errno.EINTR)
     except (
