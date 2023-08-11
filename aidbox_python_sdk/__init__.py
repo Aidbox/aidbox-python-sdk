@@ -1,5 +1,5 @@
 __title__ = "aidbox-python-sdk"
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 __author__ = "beda.software"
 __license__ = "None"
 __copyright__ = "Copyright 2023 beda.software"
