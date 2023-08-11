@@ -30,7 +30,7 @@ async def register_app(sdk: SDK, client: AsyncAidboxClient):
     try:
         # We create app directly using execute to avoid conversion
         await client.execute(
-            f"/App/{app_manifest.id}", method="put", data=app_manifest)
+            f"/App/{app_manifest['id']}", method="put", data=app_manifest)
         
         logger.info("Creating seeds and applying migrations")
         await sdk.create_seed_resources(client)
