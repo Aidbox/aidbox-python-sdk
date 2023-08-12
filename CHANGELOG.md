@@ -1,3 +1,7 @@
+## 0.1.7
+
+- Fix sqlalchemy tables recreation (useful in tests)
+
 ## 0.1.6
 
 - Revert subscriptions `request` arg changes that made in 0.1.5
