@@ -85,3 +85,8 @@ def sdk(client):
 @pytest.fixture
 def aidbox_client(client):
     return client.server.app["client"]
+
+
+@pytest.fixture()
+def aidbox_db(client):
+    return client.server.app["db"]
