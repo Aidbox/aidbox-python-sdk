@@ -1,3 +1,8 @@
+## 0.1.5
+
+- Add aidbox_db fixture
+- Adjust subscriptions to have `app` key in `request` dict
+
 ## 0.1.4
 
 - Optimize app registration (get rid of manifest conversion)
