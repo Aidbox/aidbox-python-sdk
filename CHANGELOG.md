@@ -1,3 +1,7 @@
+## 0.1.6
+
+- Revert subscriptions `request` arg changes that made in 0.1.5
+
 ## 0.1.5
 
 - Add aidbox_db fixture
