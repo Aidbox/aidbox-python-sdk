@@ -69,6 +69,7 @@ def create_table(table_name):
             nullable=False,
         ),
         Column("resource", _JSONB(astext_type=Text()), nullable=False, index=True),
+        extend_existing=True
     )
 
 
