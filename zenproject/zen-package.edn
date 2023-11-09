@@ -1,1 +1,3 @@
-{:deps {}}
+{:deps
+ {fhir.topic-based-subscription
+  "https://github.com/zen-fhir/hl7-fhir-uv-subscriptions-backport-r4b.git"}}
