@@ -27,6 +27,8 @@ jobs:
     - name: Upgrade pip
       run: |
         python -m pip install --upgrade pip
+    - name: Create deps dir
+      run: mkdir -p zenproject/zen-packages && chmod 0777 zenproject/zen-packages
     - name: Run tests
       run: ./run_test.sh
       shell: bash
