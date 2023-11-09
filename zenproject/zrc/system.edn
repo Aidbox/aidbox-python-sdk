@@ -1,0 +1,6 @@
+{ns system
+ import #{aidbox}
+
+ box
+ {:zen/tags #{aidbox/system}
+  :zen/desc "Test python sdk"}}

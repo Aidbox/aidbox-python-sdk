@@ -1,42 +1,42 @@
 version: '3.1'
 services:
-  devbox-db:
-    image: "healthsamurai/aidboxdb:14.5"
+  aidbox-db:
+    image: "healthsamurai/aidboxdb:14.9"
     ports:
       - "5434:5432"
     environment:
       POSTGRES_USER:     postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB:       devbox
-  devbox:
-    image: "healthsamurai/aidboxone:latest"
+      POSTGRES_DB:       aidbox
+  aidbox:
+    image: "healthsamurai/aidboxone:stable"
     depends_on:
-      - devbox-db
+      - aidbox-db
     links:
-      - "devbox-db:database"
+      - "aidbox-db:database"
     ports:
       - "8080:8080"
     env_file:
     - env_tests
     environment:
       PGHOST: database
-      PGDATABASE: devbox
+      PGDATABASE: aidbox
       PGPORT: 5432
       PGUSER: postgres
       PGPASSWORD: postgres
       AIDBOX_CONFIG: /var/config/config.edn
       AIDBOX_LICENSE: ${AIDBOX_LICENSE}
     volumes:
-      - ./config:/var/config
-  devbox-healthcheck:
+      - ./zenproject:/zenproject
+  aidbox-healthcheck:
     image: curlimages/curl
     entrypoint: /bin/sleep 10000
     links:
-      - devbox
+      - aidbox
     depends_on:
-      - devbox
+      - aidbox
     healthcheck:
-      test: curl --fail http://devbox:8080/__healthcheck || exit 1
+      test: curl --fail http://aidbox:8080/__healthcheck || exit 1
       interval: 1s
       timeout: 20s
       retries: 100
@@ -47,11 +47,11 @@ services:
         PYTHON_VERSION: ${PYTHON:-3.11}
     command: ["pipenv", "run", "pytest"]
     depends_on:
-      devbox-healthcheck:
+      aidbox-healthcheck:
         condition:
           service_healthy
     links:
-     - devbox
+     - aidbox
     env_file:
      - env_tests
     ports:
