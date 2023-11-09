@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB:       aidbox
   aidbox:
-    image: "healthsamurai/aidboxone:stable"
+    image: "healthsamurai/aidboxone:edge"
     depends_on:
       - aidbox-db
     links:
