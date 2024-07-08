@@ -63,11 +63,9 @@ authors = [
   { name = "beda.software", email = "aidbox-python-sdk@beda.software" },
 ]
 dependencies = [
-  "uvloop>=0.13.0",
   "aiohttp>=3.6.2",
   "SQLAlchemy>=1.3.10",
   "fhirpy>=1.3.0",
-  "coloredlogs",
   "jsonschema>=4.4.0",
 ]
 classifiers = [
@@ -81,6 +79,7 @@ classifiers = [
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
   "Topic :: Internet :: WWW/HTTP",
   "Topic :: Software Development :: Libraries :: Python Modules",
 ]
