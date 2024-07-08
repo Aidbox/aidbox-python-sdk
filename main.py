@@ -1,16 +1,17 @@
-import sqlalchemy as sa
-import logging
-import coloredlogs
-import time
 import asyncio
-from aiohttp import web
+import logging
+import time
 from datetime import datetime
-from sqlalchemy.sql.expression import select, insert
 
-from aidbox_python_sdk.main import create_app as _create_app
-from aidbox_python_sdk.settings import Settings
-from aidbox_python_sdk.sdk import SDK
+import coloredlogs
+import sqlalchemy as sa
+from aiohttp import web
+from sqlalchemy.sql.expression import insert, select
+
 from aidbox_python_sdk.handlers import routes
+from aidbox_python_sdk.main import create_app as _create_app
+from aidbox_python_sdk.sdk import SDK
+from aidbox_python_sdk.settings import Settings
 
 logger = logging.getLogger()
 coloredlogs.install(level="DEBUG", fmt="%(asctime)s %(levelname)s %(message)s")
@@ -24,9 +25,7 @@ resources = {
             "password": "12345678",
         }
     },
-    "AccessPolicy": {
-        "superadmin": {"engine": "json-schema", "schema": {"required": ["user"]}}
-    },
+    "AccessPolicy": {"superadmin": {"engine": "json-schema", "schema": {"required": ["user"]}}},
 }
 seeds = {
     "Patient": {
@@ -77,30 +76,26 @@ async def appointment_sub(event, request):
 async def _appointment_sub(event, request):
     participants = event["resource"]["participant"]
     patient_id = next(
-        p["actor"]["id"]
-        for p in participants
-        if p["actor"]["resourceType"] == "Patient"
+        p["actor"]["id"] for p in participants if p["actor"]["resourceType"] == "Patient"
     )
     patient = await request.app["client"].resources("Patient").get(id=patient_id)
-    patient_name = "{} {}".format(
-        patient["name"][0]["given"][0], patient["name"][0]["family"]
-    )
+    patient_name = "{} {}".format(patient["name"][0]["given"][0], patient["name"][0]["family"])
     appointment_dates = "Start: {:%Y-%m-%d %H:%M}, end: {:%Y-%m-%d %H:%M}".format(
         datetime.fromisoformat(event["resource"]["start"]),
         datetime.fromisoformat(event["resource"]["end"]),
     )
     logging.info("*" * 40)
     if event["action"] == "create":
-        logging.info("{}, new appointment was created.".format(patient_name))
+        logging.info("%s, new appointment was created.", patient_name)
         logging.info(appointment_dates)
     elif event["action"] == "update":
         if event["resource"]["status"] == "booked":
-            logging.info("{}, appointment was updated.".format(patient_name))
+            logging.info("%s, appointment was updated.", patient_name)
             logging.info(appointment_dates)
         elif event["resource"]["status"] == "cancelled":
-            logging.info("{}, appointment was cancelled.".format(patient_name))
+            logging.info("%s, appointment was cancelled.", patient_name)
     logging.debug("`Appointment` subscription handler")
-    logging.debug("Event: {}".format(event))
+    logging.debug("Event: %s", event)
 
 
 @sdk.operation(
@@ -131,9 +126,7 @@ async def daily_patient_report(operation, request):
     logging.debug("`daily_patient_report` operation handler")
     logging.debug("Operation data: %s", operation)
     logging.debug("Request: %s", request)
-    return web.json_response(
-        {"type": "report", "success": "Ok", "msg": "Response from APP"}
-    )
+    return web.json_response({"type": "report", "success": "Ok", "msg": "Response from APP"})
 
 
 @routes.get("/db_tests")
@@ -146,7 +139,7 @@ async def db_tests(request):
             "User": {},
         },
     }
-    unique_id = "abc{}".format(time.time())
+    unique_id = f"abc{time.time()}"
     test_statements = [
         insert(app)
         .values(id=unique_id, txid=123, status="created", resource=app_res)
@@ -159,9 +152,7 @@ async def db_tests(request):
         select([app.c.resource["type"].label("app_type")]),
         app.select().where(app.c.resource["resources"].has_key("User")),
         select([app.c.id]).where(app.c.resource["type"].astext == "app"),
-        select([sa.func.count(app.c.id)]).where(
-            app.c.resource.contains({"type": "app"})
-        ),
+        select([sa.func.count(app.c.id)]).where(app.c.resource.contains({"type": "app"})),
         # TODO: got an error for this query.
         # select('*').where(app.c.resource['resources'].has_all(array(['User', 'Client']))),
     ]

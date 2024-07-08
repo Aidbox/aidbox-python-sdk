@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import os
 
 import jsonschema
 from fhirpy.base.exceptions import OperationOutcome
@@ -11,8 +10,8 @@ from .db_migrations import sdk_migrations
 logger = logging.getLogger("aidbox_sdk")
 
 
-class SDK(object):
-    def __init__(
+class SDK:
+    def __init__(  # noqa: PLR0913
         self,
         settings,
         *,
@@ -40,7 +39,7 @@ class SDK(object):
         self._entities = entities or {}
         self._seeds = seeds or {}
         self._migrations = migrations or []
-        self._app_endpoint_name = "{}-endpoint".format(settings.APP_ID)
+        self._app_endpoint_name = f"{settings.APP_ID}-endpoint"
         self._sub_triggered = {}
         self._test_start_txid = None
 
@@ -67,13 +66,11 @@ class SDK(object):
                         resource_id,
                         resource["id"],
                     )
-                entry = {
-                    "resource": {**resource, "id": resource_id, "resourceType": entity}
-                }
+                entry = {"resource": {**resource, "id": resource_id, "resourceType": entity}}
                 # Conditional create
                 entry["request"] = {
                     "method": "POST",
-                    "url": "/{0}?_id={1}".format(entity, resource_id),
+                    "url": f"/{entity}?_id={resource_id}",
                 }
                 entries.append(entry)
         bundle = client.resource("Bundle", type="transaction", entry=entries)
@@ -99,30 +96,27 @@ class SDK(object):
                 if self._test_start_txid is not None:
                     # Skip outside test
                     if self._test_start_txid == -1:
-                        return
+                        return None
 
                     # Skip inside another test
                     if int(event["tx"]["id"]) < self._test_start_txid:
-                        return
+                        return None
                 coro_or_result = func(event, request)
                 if asyncio.iscoroutine(coro_or_result):
                     result = await coro_or_result
                 else:
-                    logger.warning(
-                        "Synchronous subscription handler is deprecated: %s", path
-                    )
+                    logger.warning("Synchronous subscription handler is deprecated: %s", path)
                     result = coro_or_result
 
                 if entity in self._sub_triggered:
                     future, counter = self._sub_triggered[entity]
                     if counter > 1:
                         self._sub_triggered[entity] = (future, counter - 1)
+                    elif future.done():
+                        pass
+                        # logger.warning('Uncaught subscription for %s', entity)
                     else:
-                        if future.done():
-                            pass
-                            # logger.warning('Uncaught subscription for %s', entity)
-                        else:
-                            future.set_result(True)
+                        future.set_result(True)
 
                 return result
 
@@ -149,7 +143,7 @@ class SDK(object):
     def was_subscription_triggered(self, entity):
         return self.was_subscription_triggered_n_times(entity, 1)
 
-    def operation(
+    def operation(  # noqa: PLR0913
         self,
         methods,
         path,
@@ -158,10 +152,8 @@ class SDK(object):
         request_schema=None,
         timeout=None,
     ):
-        if public == True and access_policy is not None:
-            raise ValueError(
-                "Operation might be public or have access policy, not both"
-            )
+        if public and access_policy is not None:
+            raise ValueError("Operation might be public or have access policy, not both")
 
         request_validator = None
         if request_schema:
@@ -177,7 +169,6 @@ class SDK(object):
                 if isinstance(p, str):
                     _str_path.append(p)
                 elif isinstance(p, dict):
-
                     _str_path.append("__{}__".format(p["name"]))
 
             def wrapped_func(operation, request):

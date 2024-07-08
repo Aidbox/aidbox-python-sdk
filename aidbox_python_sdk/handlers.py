@@ -1,6 +1,6 @@
-import logging
 import asyncio
-import os
+import logging
+
 from aiohttp import web
 from fhirpy.base.exceptions import OperationOutcome
 
@@ -9,13 +9,13 @@ routes = web.RouteTableDef()
 
 
 async def subscription(request, data):
-    logger.debug("Subscription handler: {}".format(data["handler"]))
+    logger.debug("Subscription handler: %s", data["handler"])
     if "handler" not in data or "event" not in data:
-        logger.error("`handler` and/or `event` param is missing, data: {}".format(data))
+        logger.error("`handler` and/or `event` param is missing, data: %s", data)
         raise web.HTTPBadRequest()
     handler = request.app["sdk"].get_subscription_handler(data["handler"])
     if not handler:
-        logger.error("Subscription handler `{}` was not found".format(data["handler"]))
+        logger.error("Subscription handler `%s` was not found", "handler")
         raise web.HTTPNotFound()
     result = handler(data["event"], request)
     if asyncio.iscoroutine(result):
@@ -26,9 +26,7 @@ async def subscription(request, data):
 async def operation(request, data):
     logger.debug("Operation handler: %s", data["operation"]["id"])
     if "operation" not in data or "id" not in data["operation"]:
-        logger.error(
-            "`operation` or `operation[id]` param is missing, data: %s", data
-        )
+        logger.error("`operation` or `operation[id]` param is missing, data: %s", data)
         raise web.HTTPBadRequest()
     handler = request.app["sdk"].get_operation_handler(data["operation"]["id"])
     if not handler:
@@ -57,10 +55,10 @@ TYPES = {
 
 @routes.post("/aidbox")
 async def dispatch(request):
-    logger.debug("Dispatch new request {} {}".format(request.method, request.url))
+    logger.debug("Dispatch new request %s %s", request.method, request.url)
     json = await request.json()
     if "type" in json and json["type"] in TYPES:
-        logger.debug("Dispatch to `{}` handler".format(json["type"]))
+        logger.debug("Dispatch to `%s` handler", json["type"])
         return await TYPES[json["type"]](request, json)
     req = {
         "method": request.method,

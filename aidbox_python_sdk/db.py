@@ -1,5 +1,5 @@
-import logging
 import json
+import logging
 
 from aiohttp import BasicAuth, ClientSession
 from sqlalchemy import (
@@ -7,14 +7,17 @@ from sqlalchemy import (
     Column,
     DateTime,
     Enum,
-    Text,
-    text,
-    TypeDecorator,
-    Table,
     MetaData,
+    Table,
+    Text,
+    TypeDecorator,
+    text,
 )
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB
+from sqlalchemy.dialects.postgresql import dialect as postgresql_dialect
 from sqlalchemy.sql.elements import ClauseElement
-from sqlalchemy.dialects.postgresql import JSONB, ARRAY, dialect as postgresql_dialect
+
+from aidbox_python_sdk.settings import Settings
 
 from .exceptions import AidboxDBException
 
@@ -34,11 +37,9 @@ class _JSONB(TypeDecorator):
     def process_literal_param(self, value, dialect):
         if isinstance(value, dict):
             return "'{}'".format(json.dumps(value).replace("'", "''"))
-        elif isinstance(value, str):
+        if isinstance(value, str):
             return value
-        raise ValueError(
-            "Don't know how to literal-quote " "value of type {}".format(type(value))
-        )
+        raise ValueError(f"Don't know how to literal-quote value of type {type(value)}")
 
 
 class _ARRAY(TypeDecorator):
@@ -46,12 +47,10 @@ class _ARRAY(TypeDecorator):
 
     def process_literal_param(self, value, dialect):
         if isinstance(value, list):
-            return "ARRAY{}".format(value)
-        elif isinstance(value, str):
+            return f"ARRAY{value}"
+        if isinstance(value, str):
             return value
-        raise ValueError(
-            "Don't know how to literal-quote value of type {}".format(type(value))
-        )
+        raise ValueError(f"Don't know how to literal-quote value of type {type(value)}")
 
 
 def create_table(table_name):
@@ -69,17 +68,18 @@ def create_table(table_name):
             nullable=False,
         ),
         Column("resource", _JSONB(astext_type=Text()), nullable=False, index=True),
-        extend_existing=True
+        extend_existing=True,
     )
 
 
-class DBProxy(object):
+class DBProxy:
     _client = None
     _settings = None
-    _table_cache = {}
+    _table_cache = None
 
-    def __init__(self, settings):
+    def __init__(self, settings: Settings):
         self._settings = settings
+        self._table_cache = {}
 
     async def initialize(self):
         basic_auth = BasicAuth(
@@ -103,19 +103,17 @@ class DBProxy(object):
         if not self._client:
             raise ValueError("Client not set")
         if not isinstance(sql_query, str):
-            ValueError("sql_query must be a str")
+            raise ValueError("sql_query must be a str")
         if not execute and sql_query.count(";") > 1:
-            logger.warning(
-                "Check that your query does not " "contain two queries separated by `;`"
-            )
-        query_url = "{}/$psql".format(self._settings.APP_INIT_URL)
+            logger.warning("Check that your query does not contain two queries separated by `;`")
+        query_url = f"{self._settings.APP_INIT_URL}/$psql"
         async with self._client.post(
             query_url,
             json={"query": sql_query},
             params={"execute": "true"} if execute else {},
             raise_for_status=True,
         ) as resp:
-            logger.debug("$psql answer {0}".format(await resp.text()))
+            logger.debug("$psql answer %s", await resp.text())
             results = await resp.json()
 
             if results[0]["status"] == "error":
@@ -132,16 +130,14 @@ class DBProxy(object):
 
     async def alchemy(self, statement, *, execute=False):
         if not isinstance(statement, ClauseElement):
-            ValueError("statement must be a sqlalchemy expression")
+            raise ValueError("statement must be a sqlalchemy expression")
         query = self.compile_statement(statement)
         logger.debug("Built query:\n%s", query)
         return await self.raw_sql(query, execute=execute)
 
     async def _get_all_entities_name(self):
         # TODO: refactor using sdk.client and fetch_all
-        query_url = "{}/Entity?type=resource&_elements=id&_count=999".format(
-            self._settings.APP_INIT_URL
-        )
+        query_url = f"{self._settings.APP_INIT_URL}/Entity?type=resource&_elements=id&_count=999"
         async with self._client.get(query_url, raise_for_status=True) as resp:
             json_resp = await resp.json()
             return [entry["resource"]["id"] for entry in json_resp["entry"]]
@@ -149,14 +145,9 @@ class DBProxy(object):
     async def _init_table_cache(self):
         table_names = await self._get_all_entities_name()
         self._table_cache = {
+            **{table_name: {"table_name": table_name.lower()} for table_name in table_names},
             **{
-                table_name: {"table_name": table_name.lower()}
-                for table_name in table_names
-            },
-            **{
-                "{}History".format(table_name): {
-                    "table_name": "{}_history".format(table_name.lower())
-                }
+                f"{table_name}History": {"table_name": f"{table_name.lower()}_history"}
                 for table_name in table_names
             },
         }

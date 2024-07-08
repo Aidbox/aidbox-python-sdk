@@ -1,27 +1,22 @@
-import asyncio
-import pytest_asyncio
-import pytest
 import os
+
+import pytest
+import pytest_asyncio
+from aiohttp import BasicAuth, ClientSession
 from yarl import URL
-from aiohttp import ClientSession, BasicAuth, hdrs
-from aiohttp.test_utils import TestServer, TestClient, BaseTestServer
-from aiohttp.web import Application
-from aiohttp.client import _RequestContextManager
 
 from main import create_app as _create_app
 
 
 async def start_app(aiohttp_client):
-    app = await aiohttp_client(
-        _create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081}
-    )
+    app = await aiohttp_client(_create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081})
     sdk = app.server.app["sdk"]
     sdk._test_start_txid = -1
 
     return app
 
 
-@pytest.fixture
+@pytest.fixture()
 def client(event_loop, aiohttp_client):
     """Instance of app's server and client"""
     return event_loop.run_until_complete(start_app(aiohttp_client))
@@ -29,7 +24,9 @@ def client(event_loop, aiohttp_client):
 
 class AidboxSession(ClientSession):
     def __init__(self, *args, base_url=None, **kwargs):
-        self.base_url = URL(base_url or os.environ.get("AIDBOX_BASE_URL"))
+        base_url_resolved = base_url or os.environ.get("AIDBOX_BASE_URL")
+        assert base_url_resolved, "Either base_url arg or AIDBOX_BASE_URL env var must be set"
+        self.base_url = URL(base_url_resolved)
         super().__init__(*args, **kwargs)
 
     def make_url(self, path):
@@ -71,18 +68,18 @@ async def safe_db(aidbox, client):
     sdk._test_start_txid = -1
     await aidbox.post(
         "/$psql",
-        json={"query": "select drop_before_all({});".format(txid)},
+        json={"query": f"select drop_before_all({txid});"},
         params={"execute": "true"},
         raise_for_status=True,
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def sdk(client):
     return client.server.app["sdk"]
 
 
-@pytest.fixture
+@pytest.fixture()
 def aidbox_client(client):
     return client.server.app["client"]
 

@@ -1,13 +1,13 @@
 import asyncio
-import pytest
 import logging
-from aiohttp import web, ClientSession, BasicAuth
 from unittest import mock
+
+import pytest
 
 import main
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_health_check(client):
     resp = await client.get("/health")
     assert resp.status == 200
@@ -15,7 +15,7 @@ async def test_health_check(client):
     assert json == {"status": "OK"}
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_live_health_check(client):
     resp = await client.get("/live")
     assert resp.status == 200
@@ -23,7 +23,7 @@ async def test_live_health_check(client):
     assert json == {"status": "OK"}
 
 
-@pytest.mark.skip
+@pytest.mark.skip()
 async def test_signup_reg_op(client, aidbox):
     resp = await aidbox.post("signup/register/21.02.19/testvalue")
     assert resp.status == 200
@@ -34,7 +34,7 @@ async def test_signup_reg_op(client, aidbox):
     }
 
 
-@pytest.mark.skip
+@pytest.mark.skip()
 async def test_appointment_sub(client, aidbox):
     with mock.patch.object(main, "_appointment_sub") as appointment_sub:
         f = asyncio.Future()
@@ -65,7 +65,7 @@ async def test_appointment_sub(client, aidbox):
         assert expected["resource"].items() <= event["resource"].items()
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_database_isolation__1(aidbox_client, safe_db):
     patients = await aidbox_client.resources("Patient").fetch_all()
     assert len(patients) == 2
@@ -77,7 +77,7 @@ async def test_database_isolation__1(aidbox_client, safe_db):
     assert len(patients) == 3
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio()
 async def test_database_isolation__2(aidbox_client, safe_db):
     patients = await aidbox_client.resources("Patient").fetch_all()
     assert len(patients) == 2

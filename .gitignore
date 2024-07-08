@@ -10,3 +10,4 @@ aidbox_python_sdk.egg-info/
 .python-version
 .vscode
 dist
+.history

@@ -1,4 +1,4 @@
-class AidboxSDKException(Exception):
+class AidboxSDKException(Exception):  # noqa: N818
     pass
 
 

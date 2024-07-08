@@ -44,7 +44,7 @@ class Settings:
             # if not hasattr(self, name):
             #     raise TypeError('{} is not a valid setting name'.format(name))
             setattr(self, name, value)
-        setattr(self, "static_path", None)
+        self.static_path = None
 
     def substitute_environ(self):
         """
@@ -71,9 +71,9 @@ class Settings:
                 setattr(self, attr_name, env_var)
             elif is_required and attr_name not in self._custom_settings:
                 raise RuntimeError(
-                    'The required environment variable "{0}" is currently not set, '
+                    f'The required environment variable "{env_var_name}" is currently not set, '
                     "you'll need to run `source activate.settings.sh` "
                     "or you can set that single environment variable with "
-                    '`export {0}="<value>"` or pass variable in `custom_settings` '
-                    "argument".format(env_var_name)
+                    f'`export {env_var_name}="<value>"` or pass variable in `custom_settings` '
+                    "argument"
                 )

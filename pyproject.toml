@@ -7,7 +7,7 @@ log_cli_level = "INFO"
 
 [tool.autohooks]
 mode = "pipenv"
-pre-commit = ["autohooks.plugins.black", "autohooks.plugins.isort"]
+pre-commit = ["autohooks.plugins.black", "autohooks.plugins.ruff"]
 
 [tool.black]
 line-length = 100
@@ -23,10 +23,23 @@ exclude = '''
 )
 '''
 
-[tool.isort]
-profile = "black"
-line_length = 100
-skip = [".gitignore"]
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["example"]
+
+[tool.ruff.lint]
+select = ["I", "E", "F", "N", "B", "C4", "PT", "UP", "I001", "A", "RET", "TID251", "RUF", "SIM", "PYI", "T20", "PIE", "G", "ISC", "PL"]
+# E501 is disabled because line limit is controlled by black
+# RUF005 is disabled because we use asyncio tasks without cancelling
+# RUF015 is disabled because index access is preferred way for us
+# RUF019 is disabled because it's needed for pyright
+# PIE804 is disabled because we often use FHIR like camelCase variables
+# SIM102 is disabled because nested if's are more readable
+# SIM117 is disabled because nested with's are more readable
+ignore = ["E501", "RUF006", "RUF015", "RUF019", "PIE804", "SIM102", "SIM117", "PLR2004"]
+unfixable = ["F401"]
+
 
 [tool.setuptools]
 zip-safe = false
@@ -82,9 +95,8 @@ test = [
 ]
 dev = [
   "black",
-  "isort",
   "autohooks",
-  "autohooks-plugin-isort",
+  "autohooks-plugin-ruff",
   "autohooks-plugin-black",
 ]
 
