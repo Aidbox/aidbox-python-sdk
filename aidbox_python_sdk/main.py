@@ -66,8 +66,8 @@ async def init_client(settings: Settings):
 async def init(app):
     app["client"] = await init_client(app["settings"])
     app["db"] = DBProxy(app["settings"])
-    await app["db"].initialize()
     await register_app(app["sdk"], app["client"])
+    await app["db"].initialize()
     yield
     await app["db"].deinitialize()
 
