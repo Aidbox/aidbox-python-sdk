@@ -1,3 +1,7 @@
+## 0.1.8
+
+- Move db proxy initialization after app registration
+
 ## 0.1.7
 
 - Fix sqlalchemy tables recreation (useful in tests)
