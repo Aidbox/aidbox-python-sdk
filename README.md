@@ -1,17 +1,15 @@
 [![build status](https://github.com/Aidbox/aidbox-python-sdk/actions/workflows/build.yaml/badge.svg)](https://github.com/Aidbox/aidbox-python-sdk/actions/workflows/build.yaml)
 [![pypi](https://img.shields.io/pypi/v/aidbox-python-sdk.svg)](https://pypi.org/project/aidbox-python-sdk/)
-[![Supported Python version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/release/python-380/)
+[![Supported Python version](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/release/python-390/)
 
 # aidbox-python-sdk
 
-1. Create a python 3.8+ environment `pyenv `
+1. Create a python 3.9+ environment `pyenv `
 2. Set env variables and activate virtual environment `source activate_settings.sh`
 2. Install the required packages with `pipenv install --dev`
 3. Make sure the app's settings are configured correctly (see `activate_settings.sh` and `aidbox_python_sdk/settings.py`). You can also
  use environment variables to define sensitive settings, eg. DB connection variables (see example `.env-ptl`)
 4. You can then run example with `python example.py`.
-
-Add `APP_FAST_START_MODE=TRUE` to env_tests for fast start mode.
 
 # Getting started
 ## Minimal application
