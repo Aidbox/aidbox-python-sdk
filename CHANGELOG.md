@@ -1,3 +1,7 @@
+## master
+
+- Drop support for python3.8
+
 ## 0.1.8
 
 - Move db proxy initialization after app registration
