@@ -92,6 +92,7 @@ test = [
   "pytest-aiohttp>=1.0.4",
   "pytest-cov>=4.0.0",
   "exceptiongroup>=1.2.1",
+  "tomli>=1.0.0",
 ]
 dev = [
   "black",
