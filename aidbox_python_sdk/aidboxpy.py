@@ -112,27 +112,27 @@ class SyncAidboxClient(SyncClient):
     searchset_class = SyncAidboxSearchSet
     resource_class = SyncAidboxResource
 
-    def reference(self, resource_type=None, resource_id=None, reference=None, **kwargs):
+    def reference(self, resource_type=None, id=None, reference=None, **kwargs):  # noqa: A002
         resource_type = kwargs.pop("resourceType", resource_type)
         if reference:
             if reference.count("/") > 1:
                 return SyncAidboxReference(self, url=reference, **kwargs)
-            resource_type, resource_id = reference.split("/")
-        if not resource_type and not resource_id:
+            resource_type, id = reference.split("/")  # noqa: A001
+        if not resource_type and not id:
             raise TypeError("Arguments `resource_type` and `id` or `reference`are required")
-        return SyncAidboxReference(self, resourceType=resource_type, id=resource_id, **kwargs)
+        return SyncAidboxReference(self, resourceType=resource_type, id=id, **kwargs)
 
 
 class AsyncAidboxClient(AsyncClient):
     searchset_class = AsyncAidboxSearchSet
     resource_class = AsyncAidboxResource
 
-    def reference(self, resource_type=None, resource_id=None, reference=None, **kwargs):
+    def reference(self, resource_type=None, id=None, reference=None, **kwargs):  # noqa: A002
         resource_type = kwargs.pop("resourceType", resource_type)
         if reference:
             if reference.count("/") > 1:
                 return AsyncAidboxReference(self, url=reference, **kwargs)
-            resource_type, resource_id = reference.split("/")
-        if not resource_type and not resource_id:
+            resource_type, id = reference.split("/")  # noqa: A001
+        if not resource_type and not id:
             raise TypeError("Arguments `resource_type` and `id` or `reference`are required")
-        return AsyncAidboxReference(self, resourceType=resource_type, id=resource_id, **kwargs)
+        return AsyncAidboxReference(self, resourceType=resource_type, id=id, **kwargs)
