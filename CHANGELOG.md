@@ -1,6 +1,7 @@
-## master
+## 0.1.9
 
-- Drop support for python3.8
+- Drop support of python3.8
+- Lint project source code
 
 ## 0.1.8
 
