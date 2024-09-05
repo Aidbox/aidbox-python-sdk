@@ -1,3 +1,8 @@
+## 0.1.10
+
+- Improve exposed types.py
+- Use web.AppKey for client/db/sdk/settings app keys (backward compatible with str key)
+
 ## 0.1.9
 
 - Drop support of python3.8
