@@ -3,10 +3,12 @@ import json
 import logging
 import sys
 from pathlib import Path
+from typing import cast
 
 from aiohttp import BasicAuth, client_exceptions, web
 from fhirpy.base.exceptions import OperationOutcome
 
+from . import app_keys as ak
 from .aidboxpy import AsyncAidboxClient
 from .db import DBProxy
 from .handlers import routes
@@ -47,28 +49,31 @@ async def register_app(sdk: SDK, client: AsyncAidboxClient):
 async def init_client(settings: Settings):
     aidbox_client_cls = settings.AIDBOX_CLIENT_CLASS
     basic_auth = BasicAuth(
-        login=settings.APP_INIT_CLIENT_ID,
-        password=settings.APP_INIT_CLIENT_SECRET,
+        login=cast(str, settings.APP_INIT_CLIENT_ID),
+        password=cast(str, settings.APP_INIT_CLIENT_SECRET),
     )
 
     return aidbox_client_cls(f"{settings.APP_INIT_URL}", authorization=basic_auth.encode())
 
 
-async def init(app):
-    app["client"] = await init_client(app["settings"])
-    app["db"] = DBProxy(app["settings"])
-    await register_app(app["sdk"], app["client"])
-    await app["db"].initialize()
+async def init(app: web.Application):
+    app[ak.client] = await init_client(app[ak.settings])
+    app["client"] = app[ak.client]  # For backwards compatibility
+    app[ak.db] = DBProxy(app[ak.settings])
+    app["db"] = app[ak.db]  # For backwards compatibility
+    await register_app(app[ak.sdk], app[ak.client])
+    await app[ak.db].initialize()
     yield
-    await app["db"].deinitialize()
+    await app[ak.db].deinitialize()
 
 
 def create_app(sdk: SDK):
     app = web.Application()
     app.cleanup_ctx.append(init)
-    app.update(
-        settings=sdk.settings,
-        sdk=sdk,
-    )
+    app[ak.sdk] = sdk
+    app["sdk"] = app[ak.sdk]  # For backwards compatibility
+    app[ak.settings] = sdk.settings
+    app["settings"] = app[ak.settings]  # For backwards compatibility
+
     setup_routes(app)
     return app

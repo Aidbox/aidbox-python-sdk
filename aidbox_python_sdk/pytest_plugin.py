@@ -1,16 +1,19 @@
 import os
+from typing import cast
 
 import pytest
 import pytest_asyncio
-from aiohttp import BasicAuth, ClientSession
+from aiohttp import BasicAuth, ClientSession, web
 from yarl import URL
 
 from main import create_app as _create_app
 
+from . import app_keys as ak
+
 
 async def start_app(aiohttp_client):
     app = await aiohttp_client(_create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081})
-    sdk = app.server.app["sdk"]
+    sdk = cast(web.Application, app.server.app)[ak.sdk]
     sdk._test_start_txid = -1
 
     return app
@@ -40,20 +43,18 @@ class AidboxSession(ClientSession):
 @pytest_asyncio.fixture
 async def aidbox(client):
     """HTTP client for making requests to Aidbox"""
-    app = client.server.app
+    app = cast(web.Application, client.server.app)
     basic_auth = BasicAuth(
-        login=app["settings"].APP_INIT_CLIENT_ID,
-        password=app["settings"].APP_INIT_CLIENT_SECRET,
+        login=app[ak.settings].APP_INIT_CLIENT_ID,
+        password=app[ak.settings].APP_INIT_CLIENT_SECRET,
     )
-    session = AidboxSession(auth=basic_auth)
+    session = AidboxSession(auth=basic_auth, base_url=app[ak.settings].APP_INIT_URL)
     yield session
     await session.close()
 
 
 @pytest_asyncio.fixture
-async def safe_db(aidbox, client):
-    sdk = client.server.app["sdk"]
-
+async def safe_db(aidbox, client, sdk):
     resp = await aidbox.post(
         "/$psql",
         json={"query": "SELECT last_value from transaction_id_seq;"},
@@ -76,14 +77,14 @@ async def safe_db(aidbox, client):
 
 @pytest.fixture()
 def sdk(client):
-    return client.server.app["sdk"]
+    return cast(web.Application, client.server.app)[ak.sdk]
 
 
 @pytest.fixture()
 def aidbox_client(client):
-    return client.server.app["client"]
+    return cast(web.Application, client.server.app)[ak.client]
 
 
 @pytest.fixture()
 def aidbox_db(client):
-    return client.server.app["db"]
+    return cast(web.Application, client.server.app)[ak.db]

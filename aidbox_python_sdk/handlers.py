@@ -1,19 +1,22 @@
 import asyncio
 import logging
+from typing import Any
 
 from aiohttp import web
 from fhirpy.base.exceptions import OperationOutcome
+
+from . import app_keys as ak
 
 logger = logging.getLogger("aidbox_sdk")
 routes = web.RouteTableDef()
 
 
-async def subscription(request, data):
+async def subscription(request: web.Request, data: dict):
     logger.debug("Subscription handler: %s", data["handler"])
     if "handler" not in data or "event" not in data:
         logger.error("`handler` and/or `event` param is missing, data: %s", data)
         raise web.HTTPBadRequest()
-    handler = request.app["sdk"].get_subscription_handler(data["handler"])
+    handler = request.app[ak.sdk].get_subscription_handler(data["handler"])
     if not handler:
         logger.error("Subscription handler `%s` was not found", "handler")
         raise web.HTTPNotFound()
@@ -23,12 +26,12 @@ async def subscription(request, data):
     return web.json_response({})
 
 
-async def operation(request, data):
+async def operation(request: web.Request, data: dict[str, Any]):
     logger.debug("Operation handler: %s", data["operation"]["id"])
     if "operation" not in data or "id" not in data["operation"]:
         logger.error("`operation` or `operation[id]` param is missing, data: %s", data)
         raise web.HTTPBadRequest()
-    handler = request.app["sdk"].get_operation_handler(data["operation"]["id"])
+    handler = request.app[ak.sdk].get_operation_handler(data["operation"]["id"])
     if not handler:
         logger.error("Operation handler `%s` was not found", data["handler"])
         raise web.HTTPNotFound()
