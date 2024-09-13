@@ -12,24 +12,34 @@
 4. You can then run example with `python example.py`.
 
 # Getting started
+
 ## Minimal application
-```Python
+
+main.py
+```python
 from aidbox_python_sdk.main import create_app as _create_app
 from aidbox_python_sdk.settings import Settings
 from aidbox_python_sdk.sdk import SDK
 
+
 settings = Settings(**{})
-sdk = SDK(settings, resources=resources, seeds=seeds)
+sdk = SDK(settings, resources={}, seeds={})
 
-async def create_app():
-    return await _create_app(sdk)
 
+def create_app():
+    app = await _create_app(SDK)
+    return app
+
+
+async def create_gunicorn_app() -> web.Application:
+    return create_app()
 ```
 
 ## Register handler for operation
-```Python
+```python
 import logging
 from aiohttp import web
+from aidbox_python_sdk.types import SDKOperation, SDKOperationRequest
 
 from yourappfolder import sdk 
 
@@ -39,7 +49,7 @@ from yourappfolder import sdk
     path=["signup", "register", {"name": "date"}, {"name": "test"}],
     timeout=60000  ## Optional parameter to set a custom timeout for operation in milliseconds
 )
-def signup_register_op(operation, request):
+def signup_register_op(_operation: SDKOperation, request: SDKOperationRequest):
     """
     POST /signup/register/21.02.19/testvalue
     PATCH /signup/register/22.02.19/patchtestvalue
@@ -51,8 +61,86 @@ def signup_register_op(operation, request):
 
 ```
 
-## Validate request
-```Python
+## Usage of AppKeys
+
+To access Aidbox Client, SDK, settings, DB Proxy the `app` (`web.Application`) is extended by default with the following app keys that are defined in `aidbox_python_sdk.app_keys` module:
+
+```python
+from aidbox_python_sdk import app_keys as ak
+from aidbox_python_sdk.types import SDKOperation, SDKOperationRequest
+
+@sdk.operation(["POST"], ["example"])
+async def update_organization_op(_operation: SDKOperation, request: SDKOperationRequest):
+    app = request.app
+    client = app[ak.client] # AsyncAidboxClient
+    sdk = app[ak.sdk] # SDK
+    settings = app[ak.settings] # Settings
+    db = app[ak.db] # DBProxy
+    return web.json_response()
+```
+
+## Usage of FHIR Client
+
+FHIR Client is not plugged in by default, however, to use it you can extend the app by adding new AppKey
+
+app/app_keys.py
+```python
+from fhirpy import AsyncFHIRClient
+
+fhir_client: web.AppKey[AsyncFHIRClient] = web.AppKey("fhir_client", AsyncFHIRClient)
+```
+
+main.py
+```python
+from collections.abc import AsyncGenerator
+
+from aidbox_python_sdk.main import create_app as _create_app
+from aidbox_python_sdk.settings import Settings
+from aidbox_python_sdk.sdk import SDK
+from aiohttp import BasicAuth, web
+from fhirpy import AsyncFHIRClient
+
+from app import app_keys as ak
+
+settings = Settings(**{})
+sdk = SDK(settings, resources={}, seeds={)
+
+def create_app():
+    app = await _create_app(SDK)
+    app.cleanup_ctx.append(fhir_clients_ctx)
+    return app
+
+
+async def create_gunicorn_app() -> web.Application:
+    return create_app()
+
+
+async def fhir_clients_ctx(app: web.Application) -> AsyncGenerator[None, None]:
+    app[ak.fhir_client] = await init_fhir_client(app[ak.settings], "/fhir")
+
+    yield
+
+
+async def init_fhir_client(settings: Settings, prefix: str = "") -> AsyncFHIRClient:
+    basic_auth = BasicAuth(
+        login=settings.APP_INIT_CLIENT_ID,
+        password=settings.APP_INIT_CLIENT_SECRET,
+    )
+
+    return AsyncFHIRClient(
+        f"{settings.APP_INIT_URL}{prefix}",
+        authorization=basic_auth.encode(),
+        dump_resource=lambda x: x.model_dump(),
+    )
+```
+
+After that, you can use `app[ak.fhir_client]` that has the type `AsyncFHIRClient` everywhere where the app is available.
+
+
+## Usage of request_schema
+```python
+from aidbox_python_sdk.types import SDKOperation, SDKOperationRequest
+
 schema = {
     "required": ["params", "resource"],
     "properties": {
@@ -76,10 +164,11 @@ schema = {
 
 
 @sdk.operation(["POST"], ["Organization", {"name": "id"}, "$update"], request_schema=schema)
-async def update_organization_handler(operation, request):
+async def update_organization_op(_operation: SDKOperation, request: SDKOperationRequest):
     location = request["params"]["location"]
     return web.json_response({"location": location})
 ```
+
 ### Valid request example
 ```shell
 POST /Organization/org-1/$update?abc=xyz&location=us
@@ -87,3 +176,5 @@ POST /Organization/org-1/$update?abc=xyz&location=us
 organizationType: non-profit
 employeesCount: 10
 ```
+
+
