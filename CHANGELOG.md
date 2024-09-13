@@ -1,3 +1,7 @@
+## 0.1.12
+
+- Update drop_before_all to support fhir-schema and old approach #68
+
 ## 0.1.11
 
 - Add `headers` to SDKOperationRequest
