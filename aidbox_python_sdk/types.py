@@ -5,7 +5,7 @@ from typing_extensions import TypedDict
 
 SDKOperationRequest = TypedDict(
     "SDKOperationRequest",
-    {"app": web.Application, "params": dict, "route-params": dict, "resource": Any},
+    {"app": web.Application, "params": dict, "route-params": dict, "headers": dict, "resource": Any},
 )
 
 
