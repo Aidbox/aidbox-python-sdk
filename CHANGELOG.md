@@ -1,3 +1,7 @@
+## 0.1.11
+
+- Add `headers` to SDKOperationRequest
+
 ## 0.1.10
 
 - Improve exposed types.py
