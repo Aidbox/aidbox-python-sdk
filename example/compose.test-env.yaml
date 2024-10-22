@@ -1,0 +1,40 @@
+name: aidbox-python-sdk-example-tests
+services:
+  aidbox-db:
+    image: "healthsamurai/aidboxdb:16.1"
+    env_file:
+      - ./env_tests/db
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  aidbox:
+    image: healthsamurai/aidboxone:stable
+    depends_on:
+      aidbox-db:
+        condition: service_healthy
+    env_file:
+      - ./env_tests/aidbox
+    volumes:
+      - "./tests_zen_project:/aidbox-project"
+    environment:
+      AIDBOX_LICENSE: ${AIDBOX_LICENSE_TEST}
+    healthcheck:
+      test: curl --fail http://localhost:8080/health || exit 1
+      interval: 5s
+      timeout: 30s
+      retries: 50
+  app:
+    image: ${BUILD_IMAGE}
+    build: .
+    depends_on:
+      aidbox:
+        condition: service_healthy
+    env_file:
+      - ./env_tests/app
+    volumes:
+      - ./:/app
+    command: ["poetry", "run", "pytest"]
+    environment:
+      TEST_ENV: True

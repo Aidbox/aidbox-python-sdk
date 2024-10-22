@@ -1,0 +1,16 @@
+name: aidbox-python-sdk-example
+services:
+  app:
+    image: ${BUILD_IMAGE}
+    build: .
+    env_file:
+      - .env
+    volumes:
+      - ./:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "8081:8081"
+    command: ["poetry", "run", "gunicorn", "main:create_gunicorn_app", "--worker-class", "aiohttp.worker.GunicornWebWorker", "-b", "0.0.0.0:8081", "--reload"]
+    environment:
+      TEST_ENV: True

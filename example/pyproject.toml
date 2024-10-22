@@ -1,36 +1,78 @@
-[tool.black]
-line-length = 100
-target-version = ['py38']
-exclude = '''
-(
-  /(
-    | \.git
-    | \.pytest_cache
-    | htmlcov
-    | locales
-    | resources
-    | requirements
-    | embed
-  )/
-)
-'''
+[tool.poetry]
+name = "aidbox-python-sdk-example"
+version = "0.1.0"
+description = ""
+authors = ["None"]
+readme = "README.md"
+package-mode = false
 
-[tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-use_parentheses = true
-line_length = 100
-default_section = "THIRDPARTY"
-known_first_party = ["app"]
+[tool.poetry.dependencies]
+python = "^3.12"
+aidbox-python-sdk = "^0.1.12"
+gunicorn = "^22.0.0"
+fhirpy = "^2.0.14"
+fhirpy-types-r4b = "^0.1.0"
+
+[tool.poetry.group.dev.dependencies]
+anaconda = "^0.0.1.1"
+jedi = "^0.19.1"
+ruff = "^0.6.3"
+mypy = "1.11.1"
+black = "^24.4.2"
+autohooks-plugin-mypy = "^23.10.0"
+autohooks-plugin-ruff = "^24.1.0"
+autohooks-plugin-black = "^23.10.0"
+autohooks = "^24.2.0"
+pytest = "^8.3.2"
+pytest-aiohttp = "^1.0.5"
+pytest-cov = "^5.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+target-version = ["py312"]
+line-length = 100
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["emded"]
+
+[tool.ruff.lint]
+select = ["I", "E", "F", "N", "B", "C4", "PT", "UP", "I001", "A", "RET", "TID251", "RUF", "SIM", "PYI", "T20", "PIE", "G", "ISC", "PL", "ANN"]
+# E501 is disabled because line limit is controlled by black
+# RUF015 is disabled because index access is preferred way for us
+# PIE804 is disabled because we often use FHIR like camelCase variables
+# SIM102 is disabled because nested if's are more readable
+# SIM117 is disabled because nested with's are more readable
+ignore = ["E501", "RUF006", "RUF015", "PIE804", "SIM102", "SIM117"]
+unfixable = ["F401"]
 
 [tool.autohooks]
-mode = "pythonpath"
-pre-commit = ["autohooks.plugins.black", "autohooks.plugins.isort"]
+mode = "poetry"
+pre-commit = ["autohooks.plugins.mypy", "autohooks.plugins.ruff", "autohooks.plugins.black"]
 
 [tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-ra -q --color=yes --junitxml=report.xml --cov-report html --cov-report term:skip-covered --doctest-modules"
-testpaths = ["tests"]
+minversion = "8.0"
+addopts = "-ra --color=yes --cov app --cov-report xml:coverage.xml --cov-report term --cov-report html --junitxml=report.xml"
+testpaths = [
+    "tests"
+]
+asyncio_mode = "auto"
 log_cli = true
-log_cli_level = "INFO"
-norecursedirs = "embed"
+log_cli_level = "WARNING"
+
+[tool.mypy]
+exclude = [
+    ".history",
+    "embed"
+]
+files = ["app", "tests"]
+ignore_missing_imports = true
+check_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+[tool.pydantic-mypy]
+init_typed = true

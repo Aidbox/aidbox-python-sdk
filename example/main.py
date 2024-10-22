@@ -1,36 +1,68 @@
 import logging
-import coloredlogs
-from asyncio import get_event_loop
+from collections.abc import AsyncGenerator
 
-import sentry_sdk
-from sentry_sdk.integrations.logging import LoggingIntegration
-from sentry_sdk.integrations.aiohttp import AioHttpIntegration
-from aidbox_python_sdk.main import create_app as _create_app
+from aidbox_python_sdk.main import init_client, register_app, setup_routes
+from aidbox_python_sdk.settings import Settings
+from aiohttp import BasicAuth, ClientSession, web
+from fhirpy import AsyncFHIRClient
 
-# Don't remove these imports
-from app.sdk import sdk_settings, sdk
-import app.subscriptions
+from app import app_keys as ak
+from app import config, operations  # noqa: F401
+from app.sdk import sdk
 
-
-
-coloredlogs.install(
-    level="DEBUG", fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
 logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.DEBUG
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
-logging.getLogger("aidbox_sdk").setLevel(logging.INFO)
-logging.getLogger("urllib3").setLevel(logging.INFO)
-
-sentry_logging = LoggingIntegration(
-    level=logging.DEBUG,  # Capture info and above as breadcrumbs
-    event_level=logging.WARNING,  # Send warnings as events
-)
-sentry_sdk.init(integrations=[AioHttpIntegration(), sentry_logging])
 
 
-async def create_app():
-    return await _create_app(sdk_settings, sdk, debug=True)
+async def init_fhir_client(settings: Settings, prefix: str = "") -> AsyncFHIRClient:
+    basic_auth = BasicAuth(
+        login=settings.APP_INIT_CLIENT_ID,
+        password=settings.APP_INIT_CLIENT_SECRET,
+    )
+
+    return AsyncFHIRClient(
+        f"{settings.APP_INIT_URL}{prefix}",
+        authorization=basic_auth.encode(),
+        dump_resource=lambda x: x.model_dump(),
+    )
 
 
+async def fhir_client_ctx(app: web.Application) -> AsyncGenerator[None, None]:
+    app[ak.fhir_client] = await init_fhir_client(app[ak.settings], "/fhir")
+    yield
 
+
+async def client_ctx(app: web.Application) -> AsyncGenerator[None, None]:
+    app[ak.client] = await init_client(app[ak.settings])
+    yield
+
+
+async def app_ctx(app: web.Application) -> AsyncGenerator[None, None]:
+    await register_app(app[ak.sdk], app[ak.client])
+    yield
+
+
+async def client_session_ctx(app: web.Application) -> AsyncGenerator[None, None]:
+    session = ClientSession()
+    app[ak.session] = session
+    yield
+    await session.close()
+
+
+def create_app() -> web.Application:
+    app = web.Application()
+    app[ak.sdk] = sdk
+    app[ak.settings] = sdk.settings
+    app.cleanup_ctx.append(client_session_ctx)
+    app.cleanup_ctx.append(client_ctx)
+    app.cleanup_ctx.append(fhir_client_ctx)
+    app.cleanup_ctx.append(app_ctx)
+
+    setup_routes(app)
+
+    return app
+
+
+async def create_gunicorn_app() -> web.Application:
+    return create_app()

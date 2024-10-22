@@ -1,14 +1,16 @@
 #!/bin/sh
 
-if [ -f ".env" ]; then
-    export `cat .env`
+if [ -f ".env.tests.local" ]; then
+    export `cat .env.tests.local`
 fi
 
-if [ -z "${TESTS_AIDBOX_LICENSE}" ]; then
-    echo "TESTS_AIDBOX_LICENSE is required to run tests"
+if [ -z "${AIDBOX_LICENSE_TEST}" ]; then
+    echo "AIDBOX_LICENSE_TEST is required to run tests"
     exit 1
 fi
 
-export TEST_COMMAND="pipenv run pytest --cov app ${@:-tests/}"
-docker compose -f docker-compose.tests.yaml up --exit-code-from backend backend
+
+docker compose -f compose.test-env.yaml pull --quiet
+docker compose -f compose.test-env.yaml up --exit-code-from app app
+
 exit $?
