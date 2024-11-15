@@ -11,6 +11,6 @@ fi
 
 
 docker compose -f compose.test-env.yaml pull --quiet
-docker compose -f compose.test-env.yaml up --exit-code-from app app
+docker compose -f compose.test-env.yaml up --exit-code-from backend backend
 
 exit $?

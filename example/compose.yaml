@@ -1,16 +1,63 @@
 name: aidbox-python-sdk-example
 services:
-  app:
-    image: ${BUILD_IMAGE}
-    build: .
+  aidbox-db:
+    image: "healthsamurai/aidboxdb:16.1"
     env_file:
-      - .env
-    volumes:
-      - ./:/app
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - ./env/db
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  aidbox:
+    image: healthsamurai/aidboxone:stable
+    depends_on:
+      build-seeds:
+        condition: service_completed_successfully
+      aidbox-db:
+        condition: service_healthy
     ports:
-      - "8081:8081"
-    command: ["poetry", "run", "gunicorn", "main:create_gunicorn_app", "--worker-class", "aiohttp.worker.GunicornWebWorker", "-b", "0.0.0.0:8081", "--reload"]
+      - 8080:8080
+    env_file:
+      - ./env/aidbox
     environment:
-      TEST_ENV: True
+      - AIDBOX_LICENSE
+    volumes:
+      - ./aidbox-project/zenproject:/aidbox-project
+    healthcheck:
+      test: curl --fail http://localhost:8080/health || exit 1
+      interval: 5s
+      timeout: 30s
+      retries: 50
+  build-seeds:
+    image: bedasoftware/fhirsnake:latest
+    command:
+      - export
+      - --output
+      - /app/zenproject/seeds.ndjson.gz
+    volumes:
+      - ./aidbox-project/zenproject:/app/zenproject
+      - ./aidbox-project/resources/seeds:/app/resources
+  backend:
+    build:
+      context: ./backend
+    depends_on:
+      aidbox:
+        condition: service_healthy
+    env_file:
+      - ./env/backend
+    volumes:
+      - ./backend:/app
+    command:
+      [
+        "poetry",
+        "run",
+        "gunicorn",
+        "main:create_gunicorn_app",
+        "--reload",
+        "--worker-class",
+        "aiohttp.worker.GunicornWebWorker",
+        "-b",
+        "0.0.0.0:8081",
+      ]
+

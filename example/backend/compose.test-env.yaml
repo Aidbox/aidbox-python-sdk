@@ -1,4 +1,6 @@
 name: aidbox-python-sdk-example-tests
+volumes:
+  aidbox-project-zen-package:
 services:
   aidbox-db:
     image: "healthsamurai/aidboxdb:16.1"
@@ -9,15 +11,22 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+  aidbox-project:
+    build: ../aidbox-project
+    image: ${AIDBOX_PROJECT_IMAGE}
+    volumes:
+      - aidbox-project-zen-package:/output
   aidbox:
     image: healthsamurai/aidboxone:stable
     depends_on:
+      aidbox-project:
+        condition: service_completed_successfully
       aidbox-db:
         condition: service_healthy
     env_file:
       - ./env_tests/aidbox
     volumes:
-      - "./tests_zen_project:/aidbox-project"
+      - aidbox-project-zen-package:/aidbox-project
     environment:
       AIDBOX_LICENSE: ${AIDBOX_LICENSE_TEST}
     healthcheck:
@@ -25,14 +34,14 @@ services:
       interval: 5s
       timeout: 30s
       retries: 50
-  app:
+  backend:
     image: ${BUILD_IMAGE}
     build: .
     depends_on:
       aidbox:
         condition: service_healthy
     env_file:
-      - ./env_tests/app
+      - ./env_tests/backend
     volumes:
       - ./:/app
     command: ["poetry", "run", "pytest"]

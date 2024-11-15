@@ -1,0 +1,17 @@
+__pycache__
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.history
+.vscode
+
+.env
+.env.tests.local
+
+.coverage
+
+htmlcov
+coverage.xml
+report.xml
+
+.DS_Store

@@ -1,0 +1,9 @@
+.env
+
+.DS_Store
+.clj-kondo
+.lsp
+.history
+
+zenproject/zen-packages
+seeds.ndjson.gz

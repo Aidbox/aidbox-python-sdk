@@ -6,3 +6,7 @@ stop-test:
 
 down-test:
 	docker compose -f compose.test-env.yaml down
+
+run-test:
+	./run_test.sh
+
