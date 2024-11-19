@@ -27,11 +27,7 @@ RUN cd /opt/app && java -jar /opt/zen/zen.jar zen build zenproject zen-package
 
 RUN ls -lah /opt/app/zenproject
 
-FROM bash AS runner
+FROM healthsamurai/aidboxone:stable
 
-RUN mkdir /app
-WORKDIR /app
+COPY --from=builder /opt/app/zenproject/zen-package.zip /aidbox-project/zen-package.zip
 
-COPY --from=builder /opt/app/zenproject/zen-package.zip /app/zen-package.zip
-
-CMD ["cp", "/app/zen-package.zip", "/output/zen-package.zip"]

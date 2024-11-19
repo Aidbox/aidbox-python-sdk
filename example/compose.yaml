@@ -10,7 +10,7 @@ services:
       timeout: 5s
       retries: 10
   aidbox:
-    image: healthsamurai/aidboxone:stable
+    build: ./aidbox-project
     depends_on:
       build-seeds:
         condition: service_completed_successfully
