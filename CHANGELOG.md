@@ -1,6 +1,7 @@
 ## 0.1.14
 
 - Fix db innitialization crash for fhirschema
+- Update aiohttp = "~=3.10.2"
 
 ## 0.1.13
 
