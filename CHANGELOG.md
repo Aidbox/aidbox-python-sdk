@@ -1,3 +1,7 @@
+## 0.1.14
+
+- Fix db innitialization crash for fhirschema
+
 ## 0.1.13
 
 - Add py.typed marker

@@ -140,7 +140,7 @@ class DBProxy:
         query_url = f"{self._settings.APP_INIT_URL}/Entity?type=resource&_elements=id&_count=999"
         async with self._client.get(query_url, raise_for_status=True) as resp:
             json_resp = await resp.json()
-            return [entry["resource"]["id"] for entry in json_resp["entry"]]
+            return [entry["resource"]["id"] for entry in json_resp.get("entry", [])]
 
     async def _init_table_cache(self):
         table_names = await self._get_all_entities_name()
