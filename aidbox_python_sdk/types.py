@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 
 from aiohttp import web
 from typing_extensions import TypedDict
@@ -6,7 +6,7 @@ from typing_extensions import TypedDict
 class Compliance(TypedDict, total=True):
     fhirUrl: str
     fhirCode: str
-    fhirResource: list[str]
+    fhirResource: Dict[str]
 
 SDKOperationRequest = TypedDict(
     "SDKOperationRequest",
