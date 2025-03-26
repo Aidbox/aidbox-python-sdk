@@ -1,7 +1,7 @@
 #!/bin/sh
 
-if [ -f "env_tests" ]; then
-    export `cat env_tests`
+if [ -f "envs/aidbox" ]; then
+    export `cat envs/aidbox`
 fi
 
 if [ -z "${AIDBOX_LICENSE}" ]; then
