@@ -152,7 +152,7 @@ class SDK:
         access_policy=None,
         request_schema=None,
         timeout=None,
-        complience_params: Optional[Dict[str, Any]] = None,
+        compliance_params: Optional[Dict[str, Any]] = None,
     ):
         if public and access_policy is not None:
             raise ValueError("Operation might be public or have access policy, not both")
@@ -186,7 +186,7 @@ class SDK:
                     "method": method,
                     "path": path,
                     **({"timeout": timeout} if timeout else {}),
-                    **(complience_params if complience_params else {}),
+                    **(compliance_params if compliance_params else {}),
                 }
                 self._operation_handlers[operation_id] = wrapped_func
                 if public is True:
