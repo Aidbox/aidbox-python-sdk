@@ -1,3 +1,7 @@
+## 0.1.15
+
+- Add compliance_params (fhirCore, fhirUrl, fhirResource) as operation parameter
+
 ## 0.1.14
 
 - Fix db innitialization crash for fhirschema

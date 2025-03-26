@@ -1,11 +1,13 @@
 import asyncio
 import logging
+from typing import Optional
 
 import jsonschema
 from fhirpy.base.exceptions import OperationOutcome
 
 from .aidboxpy import AsyncAidboxClient
 from .db_migrations import sdk_migrations
+from .types import Compliance
 
 logger = logging.getLogger("aidbox_sdk")
 
@@ -151,6 +153,7 @@ class SDK:
         access_policy=None,
         request_schema=None,
         timeout=None,
+        compliance: Optional[Compliance] = None,
     ):
         if public and access_policy is not None:
             raise ValueError("Operation might be public or have access policy, not both")
@@ -184,6 +187,7 @@ class SDK:
                     "method": method,
                     "path": path,
                     **({"timeout": timeout} if timeout else {}),
+                    **(compliance if compliance else {}),
                 }
                 self._operation_handlers[operation_id] = wrapped_func
                 if public is True:

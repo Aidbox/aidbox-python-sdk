@@ -160,3 +160,15 @@ async def db_tests(request):
         result = await db.alchemy(statement)
         logging.debug("Result:\n%s", result)
     return web.json_response({})
+
+
+@sdk.operation(
+    ["POST"],
+    ["Observation", "observation-custom-op"],
+    compliance={
+        "fhirCode": "observation-custom-op",
+        "fhirUrl": "http://test.com",
+        "fhirResource": ["Observation"],
+    })
+async def observation_custom_op(operation, request):
+    return {"message": "Observation custom operation response"}

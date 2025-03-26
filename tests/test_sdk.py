@@ -3,8 +3,36 @@ import logging
 from unittest import mock
 
 import pytest
+from fhirpathpy import evaluate
 
 import main
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("expression", "expected"),
+    [
+        (
+            "CapabilityStatement.rest.operation.where(definition='http://test.com').count()",
+            1,
+        ),
+        (
+            "CapabilityStatement.rest.operation.where(definition='http://test.com').first().name",
+            "observation-custom-op",
+        ),
+        (
+            "CapabilityStatement.rest.resource.where(type='Observation').operation.where(definition='http://test.com').count()",
+            1,
+        ),
+        (
+            "CapabilityStatement.rest.resource.where(type='Observation').operation.where(definition='http://test.com').first().name",
+            "observation-custom-op",
+        ),
+    ],
+)
+async def test_operation_with_compliance_params(aidbox_client, expression, expected):
+    response = await aidbox_client.execute("fhir/metadata", method="GET")
+    assert evaluate(response, expression, {})[0] == expected
 
 
 @pytest.mark.asyncio()

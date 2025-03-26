@@ -20,8 +20,7 @@ autohooks-plugin-ruff = "~=23.11.0"
 autohooks-plugin-black = "~=23.7.0"
 coloredlogs = "*"
 ruff = "*"
-
-# dependencies for python 3.8
 exceptiongroup = "~=1.2.1"
 tomli = "~=2.0.1"
 async-timeout = "~=4.0.3"
+fhirpathpy = "==2.0.0"
