@@ -7,6 +7,36 @@ import pytest
 import main
 
 
+@pytest.mark.asyncio
+async def test_operation_with_compliance_params(client):
+    sdk = client.server.app["sdk"]
+
+    compliance = {
+        "fhirCode": "observation-custom-op",
+        "fhirUrl": "http://test.com",
+        "fhirResource": ["Observation"],
+    }
+
+    @sdk.operation(["POST"], ["Observation", "observation-custom-op"], compliance=compliance)
+    async def observation_custom_op(operation, request):
+        return {"message": "Observation custom operation response"}
+
+
+    operation_id = "POST.tests.test_sdk.observation_custom_op.Observation_observation-custom-op"
+
+    assert operation_id in sdk._operations
+
+    assert sdk._operations[operation_id]["fhirCode"] == "observation-custom-op"
+    assert sdk._operations[operation_id]["fhirUrl"] == "http://test.com"
+    assert sdk._operations[operation_id]["fhirResource"] == ["Observation"]
+
+    handler = sdk.get_operation_handler(operation_id)
+    assert handler is not None
+
+    response = await handler({}, {})
+    assert response == {"message": "Observation custom operation response"}
+
+
 @pytest.mark.asyncio()
 async def test_health_check(client):
     resp = await client.get("/health")
