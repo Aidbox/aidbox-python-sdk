@@ -1,6 +1,6 @@
 ## 0.1.15
 
-- Add fhir_code, fhir_url, fhir_resource as operation parameters
+- Add compliance_params (fhirCore, fhirUrl, fhirResource) as operation parameter
 
 ## 0.1.14
 
