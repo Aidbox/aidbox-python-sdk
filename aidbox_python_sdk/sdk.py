@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from typing import Dict, Any, Optional
 
 import jsonschema
 from fhirpy.base.exceptions import OperationOutcome
@@ -151,9 +152,7 @@ class SDK:
         access_policy=None,
         request_schema=None,
         timeout=None,
-        fhir_code=None,
-        fhir_url=None,
-        fhir_resource=None,
+        complience_params: Optional[Dict[str, Any]] = None,
     ):
         if public and access_policy is not None:
             raise ValueError("Operation might be public or have access policy, not both")
@@ -187,9 +186,7 @@ class SDK:
                     "method": method,
                     "path": path,
                     **({"timeout": timeout} if timeout else {}),
-                    **({"fhirCode": fhir_code} if fhir_code else {}),
-                    **({"fhirUrl": fhir_url} if fhir_url else {}),
-                    **({"fhirResource": fhir_resource} if fhir_resource else {}),
+                    **(complience_params if complience_params else {}),
                 }
                 self._operation_handlers[operation_id] = wrapped_func
                 if public is True:
