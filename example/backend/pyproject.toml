@@ -9,7 +9,7 @@ package-mode = false
 [tool.poetry.dependencies]
 python = "^3.12"
 aidbox-python-sdk = "^0.1.13"
-gunicorn = "^22.0.0"
+gunicorn = "^23.0.0"
 fhirpy = "^2.0.14"
 fhirpy-types-r4b = "^0.1.1"
 
