@@ -11,6 +11,7 @@ fi
 
 
 docker compose -f docker-compose.yaml pull --quiet
+docker compose -f docker-compose.yaml build
 docker compose -f docker-compose.yaml up --exit-code-from app app
 
 exit $?
