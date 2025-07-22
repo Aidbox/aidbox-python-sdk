@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-aiohttp = "~=3.10.2"
+aiohttp = ">=3.10.2,<3.13.0"
 sqlalchemy = "~=2.0.5"
 fhirpy = "~=1.3.0"
 jsonschema = "~=4.17.3"
