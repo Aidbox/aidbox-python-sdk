@@ -2,7 +2,6 @@ import os
 from typing import cast
 
 import pytest
-import pytest_asyncio
 from aiohttp import BasicAuth, ClientSession, web
 from yarl import URL
 
@@ -19,10 +18,10 @@ async def start_app(aiohttp_client):
     return app
 
 
-@pytest.fixture()
-def client(event_loop, aiohttp_client):
+@pytest.fixture
+async def client(aiohttp_client):
     """Instance of app's server and client"""
-    return event_loop.run_until_complete(start_app(aiohttp_client))
+    return await start_app(aiohttp_client)
 
 
 class AidboxSession(ClientSession):
@@ -40,7 +39,7 @@ class AidboxSession(ClientSession):
         return await super()._request(method, url, *args, **kwargs)
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def aidbox(client):
     """HTTP client for making requests to Aidbox"""
     app = cast(web.Application, client.server.app)
@@ -53,7 +52,7 @@ async def aidbox(client):
     await session.close()
 
 
-@pytest_asyncio.fixture
+@pytest.fixture
 async def safe_db(aidbox, client, sdk):
     resp = await aidbox.post(
         "/$psql",
@@ -75,16 +74,16 @@ async def safe_db(aidbox, client, sdk):
     )
 
 
-@pytest.fixture()
+@pytest.fixture
 def sdk(client):
     return cast(web.Application, client.server.app)[ak.sdk]
 
 
-@pytest.fixture()
+@pytest.fixture
 def aidbox_client(client):
     return cast(web.Application, client.server.app)[ak.client]
 
 
-@pytest.fixture()
+@pytest.fixture
 def aidbox_db(client):
     return cast(web.Application, client.server.app)[ak.db]
