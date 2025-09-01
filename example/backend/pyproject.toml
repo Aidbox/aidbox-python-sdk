@@ -8,24 +8,24 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
-aidbox-python-sdk = "^0.1.13"
-gunicorn = "^22.0.0"
-fhirpy = "^2.0.14"
+aidbox-python-sdk = "^0.1.17"
+gunicorn = "^23.0.0"
+fhirpy = "^2.0.15"
 fhirpy-types-r4b = "^0.1.1"
 
 [tool.poetry.group.dev.dependencies]
 anaconda = "^0.0.1.1"
-jedi = "^0.19.1"
-ruff = "^0.6.3"
-mypy = "^1.11.1"
-black = "^24.4.2"
+jedi = "^0.19.2"
+ruff = "^0.12.11"
+mypy = "^1.17.1"
+black = "^25.1.0"
 autohooks-plugin-mypy = "^23.10.0"
-autohooks-plugin-ruff = "^24.1.0"
+autohooks-plugin-ruff = "^25.3.1"
 autohooks-plugin-black = "^23.10.0"
-autohooks = "^24.2.0"
-pytest = "^8.3.2"
-pytest-aiohttp = "^1.0.5"
-pytest-cov = "^5.0.0"
+autohooks = "^25.4.0"
+pytest = "^8.4.1"
+pytest-aiohttp = "^1.1.0"
+pytest-cov = "^6.2.1"
 
 [build-system]
 requires = ["poetry-core"]
