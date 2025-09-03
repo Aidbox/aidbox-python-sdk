@@ -136,11 +136,21 @@ class DBProxy:
         return await self.raw_sql(query, execute=execute)
 
     async def _get_all_entities_name(self):
-        # TODO: refactor using StructureDefintion
+        result = None
+
+        #Support legacy instalations with entity attribute data structure
         query_url = f"{self._settings.APP_INIT_URL}/Entity?type=resource&_elements=id&_count=999"
         async with self._client.get(query_url) as resp:
             json_resp = await resp.json()
-            return [entry["resource"]["id"] for entry in json_resp.get("entry", [])]
+            result = [entry["resource"]["id"] for entry in json_resp.get("entry", [])]
+
+        if result is None or len(result) == []:
+            # Load resource type from fhir schema
+            query_url = f"{self._settings.APP_INIT_URL}/$resource-types"
+            async with self._client.get(query_url) as resp:
+                json_resp = await resp.json()
+                result = list(json_resp.keys())
+        return result or []
 
     async def _init_table_cache(self):
         table_names = await self._get_all_entities_name()
