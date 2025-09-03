@@ -144,7 +144,7 @@ class DBProxy:
             json_resp = await resp.json()
             result = [entry["resource"]["id"] for entry in json_resp.get("entry", [])]
 
-        if result is None or len(result) == []:
+        if result is None or len(result) == 0:
             # Load resource type from fhir schema
             query_url = f"{self._settings.APP_INIT_URL}/$resource-types"
             async with self._client.get(query_url) as resp:
