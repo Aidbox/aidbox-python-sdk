@@ -109,9 +109,12 @@ class AsyncAidboxReference(BaseAidboxReference, AsyncReference):
 
 
 class SyncAidboxClient(SyncClient):
-    searchset_class = SyncAidboxSearchSet
-    resource_class = SyncAidboxResource
-
+    def resource(self, resource_type, **kwargs):
+        return SyncAidboxResource(self, resource_type, **kwargs)
+         
+    def resources(self, resource_type):
+        return SyncAidboxSearchSet(self, resource_type)
+        
     def reference(self, resource_type=None, id=None, reference=None, **kwargs):  # noqa: A002
         resource_type = kwargs.pop("resourceType", resource_type)
         if reference:
@@ -124,8 +127,11 @@ class SyncAidboxClient(SyncClient):
 
 
 class AsyncAidboxClient(AsyncClient):
-    searchset_class = AsyncAidboxSearchSet
-    resource_class = AsyncAidboxResource
+    def resource(self, resource_type, **kwargs):
+        return AsyncAidboxResource(self, resource_type, **kwargs)
+         
+    def resources(self, resource_type):
+        return AsyncAidboxSearchSet(self, resource_type)
 
     def reference(self, resource_type=None, id=None, reference=None, **kwargs):  # noqa: A002
         resource_type = kwargs.pop("resourceType", resource_type)
