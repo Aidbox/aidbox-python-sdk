@@ -1,3 +1,28 @@
+## 0.1.21
+
+- Fix drop_before_all test fixture for resources with suffix history
+
+## 0.1.20
+
+- Fix deprecation warnings of fhirpy
+
+## 0.1.19
+
+- Use $resource-types over Entity for db
+
+## 0.1.18
+
+- Add fhir-schema support to DB Proxy
+
+## 0.1.17
+
+- update dependencies
+- get rid of deprecated event_loop asyncio fixture
+
+## 0.1.16
+
+- Don't raise 404 error for aidbox configured with FHIR Schema
+
 ## 0.1.15
 
 - Add compliance_params (fhirCore, fhirUrl, fhirResource) as operation parameter
