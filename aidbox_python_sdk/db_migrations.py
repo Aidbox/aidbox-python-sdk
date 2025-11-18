@@ -27,7 +27,7 @@ BEGIN
 FOR e IN (
   SELECT table_name
   FROM information_schema.columns
-  WHERE column_name = 'txid' AND table_schema = 'public' AND table_name NOT LIKE '%_history'
+  WHERE column_name = 'txid' AND table_schema = 'public' AND table_name NOT LIKE '%\\_history' ESCAPE '\\'
 ) LOOP
     EXECUTE 'DELETE FROM "' || e.table_name || '" WHERE txid > ' || $1 ;
 END LOOP;

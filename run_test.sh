@@ -1,7 +1,7 @@
 #!/bin/sh
 
-if [ -f "envs/aidbox" ]; then
-    export `cat envs/aidbox`
+if [ -f ".env" ]; then
+    export `cat .env`
 fi
 
 if [ -z "${AIDBOX_LICENSE}" ]; then
