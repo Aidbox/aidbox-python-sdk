@@ -1,3 +1,7 @@
+## 0.1.22
+
+- Fix drop_before_all test fixture for resources with suffix history
+
 ## 0.1.21
 
 - Fix drop_before_all test fixture for resources with suffix history
