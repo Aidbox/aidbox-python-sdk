@@ -75,8 +75,9 @@ class SDK:
                     "url": f"/{entity}?_id={resource_id}",
                 }
                 entries.append(entry)
-        bundle = client.resource("Bundle", type="transaction", entry=entries)
-        await bundle.save()
+        if len(entries) > 0:
+            bundle = client.resource("Bundle", type="transaction", entry=entries)
+            await bundle.save()
 
     def build_manifest(self):
         if self._resources:
