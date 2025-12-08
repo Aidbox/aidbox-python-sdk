@@ -1,3 +1,7 @@
+## 0.1.23
+
+- Don't upload empty seeds bundle
+
 ## 0.1.22
 
 - Fix drop_before_all test fixture for resources with suffix history
