@@ -1,3 +1,7 @@
+## 0.1.25
+
+- Fix drop_before_all test fixture to properly exclude history tables using regex pattern
+
 ## 0.1.24
 
 - Fix build
