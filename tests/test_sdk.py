@@ -8,7 +8,8 @@ from fhirpathpy import evaluate
 import main
 
 
-@pytest.mark.asyncio
+@pytest.mark.skip("Skipped because of regression in Aidbox 2510")
+@pytest.mark.asyncio()
 @pytest.mark.parametrize(
     ("expression", "expected"),
     [
