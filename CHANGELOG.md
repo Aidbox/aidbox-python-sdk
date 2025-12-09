@@ -1,3 +1,7 @@
+## 0.1.24
+
+- Fix build
+
 ## 0.1.23
 
 - Don't upload empty seeds bundle
