@@ -12,7 +12,7 @@ pre-commit = ["autohooks.plugins.black", "autohooks.plugins.ruff"]
 
 [tool.black]
 line-length = 100
-target-version = ['py311']
+target-version = ['py39']
 exclude = '''
 (
   /(
@@ -25,7 +25,7 @@ exclude = '''
 '''
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py39"
 line-length = 100
 extend-exclude = ["example"]
 

@@ -11,6 +11,9 @@ from .types import Compliance
 
 logger = logging.getLogger("aidbox_sdk")
 
+# (target_loop, future, counter) per entity for was_subscription_triggered_*
+_SubTriggered = dict[str, tuple[asyncio.AbstractEventLoop, asyncio.Future[bool], int]]
+
 
 class SDK:
     def __init__(  # noqa: PLR0913
@@ -42,7 +45,7 @@ class SDK:
         self._seeds = seeds or {}
         self._migrations = migrations or []
         self._app_endpoint_name = f"{settings.APP_ID}-endpoint"
-        self._sub_triggered = {}
+        self._sub_triggered: _SubTriggered = {}
         self._test_start_txid = None
 
     async def apply_migrations(self, client: AsyncAidboxClient):
@@ -112,14 +115,14 @@ class SDK:
                     result = coro_or_result
 
                 if entity in self._sub_triggered:
-                    future, counter = self._sub_triggered[entity]
+                    target_loop, future, counter = self._sub_triggered[entity]
                     if counter > 1:
-                        self._sub_triggered[entity] = (future, counter - 1)
+                        self._sub_triggered[entity] = (target_loop, future, counter - 1)
                     elif future.done():
                         pass
                         # logger.warning('Uncaught subscription for %s', entity)
                     else:
-                        future.set_result(True)
+                        target_loop.call_soon_threadsafe(future.set_result, True)
 
                 return result
 
@@ -133,14 +136,13 @@ class SDK:
 
     def was_subscription_triggered_n_times(self, entity, counter):
         timeout = 10
-
         future = asyncio.Future()
-        self._sub_triggered[entity] = (future, counter)
-        asyncio.get_event_loop().call_later(
+        target_loop = asyncio.get_running_loop()
+        self._sub_triggered[entity] = (target_loop, future, counter)
+        target_loop.call_later(
             timeout,
             lambda: None if future.done() else future.set_exception(Exception()),
         )
-
         return future
 
     def was_subscription_triggered(self, entity):
