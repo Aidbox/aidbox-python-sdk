@@ -1,3 +1,10 @@
+## 0.2.0
+
+- Make pytest_plugin confiugurable via `aidbox_create_app` pytest settings for create_app function
+- Deprecate `aidbox` pytest fixture
+- Add `app` session-scope fixture that does initialization of `app` only once
+- Fix `sdk.was_subscription_triggered` to work with session-scope app
+
 ## 0.1.25
 
 - Fix drop_before_all test fixture to properly exclude history tables using regex pattern
