@@ -57,6 +57,7 @@ def app(create_app) -> Generator[web.Application, None, None]:
     """
 
     app = create_app()
+    app[ak.sdk]._test_start_txid = -1
     loop = asyncio.new_event_loop()
 
     runner = web.AppRunner(app)
