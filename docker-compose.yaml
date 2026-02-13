@@ -1,4 +1,3 @@
-version: '3.1'
 services:
   aidbox-db:
     image: "healthsamurai/aidboxdb:16.1"
@@ -36,7 +35,7 @@ services:
       aidbox:
         condition: service_healthy
     env_file:
-      - ./envs/backend
+      - ./envs/app
     ports:
      - "8081:8081"
     volumes:
