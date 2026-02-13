@@ -177,4 +177,68 @@ organizationType: non-profit
 employeesCount: 10
 ```
 
+## Testing with the pytest plugin
+
+The SDK provides a pytest plugin that starts your app, exposes fixtures for the SDK and Aidbox client, and helps isolate tests that create resources.
+
+### Activating the plugin
+
+In your project’s **`conftest.py`** (e.g. `tests/conftest.py`), register the plugin:
+
+```python
+pytest_plugins = ["aidbox_python_sdk.pytest_plugin"]
+```
+
+Alternatively you can configure it in **`pyproject.toml`**:
+
+```toml
+[tool.pytest.ini_options]
+pytest_plugins = ["aidbox_python_sdk.pytest_plugin"]
+```
+
+### Configuring the app factory
+
+The plugin needs your app factory (the callable that returns the `web.Application`). You can set it in pytest ini:
+
+**`pyproject.toml`**
+```toml
+[tool.pytest.ini_options]
+pytest_plugins = ["aidbox_python_sdk.pytest_plugin"]
+aidbox_create_app = "main:create_app"
+```
+
+Use the dotted path to your callable: either `module:name` (e.g. `main:create_app`) or `module.submodule.name` (e.g. `mypackage.main.create_app`). The default is `main:create_app`.
+
+To use a different factory without changing ini, override the fixture in your `conftest.py`:
+
+```python
+@pytest.fixture(scope="session")
+def create_app():
+    from myapp.entry import create_app
+    return create_app
+```
+
+### Fixtures provided
+
+| Fixture          | Description |
+|------------------|-------------|
+| `app`            | The running `web.Application` (server in a background thread on port 8081). |
+| `client`         | HTTP client for the app + `client.server.app` for the application instance. |
+| `sdk`            | The SDK instance: `app[ak.sdk]`. |
+| `aidbox_client`  | `AsyncAidboxClient` for calling Aidbox (operations, `/$psql`, etc.). |
+| `aidbox_db`      | DB proxy: `app[ak.db]`. |
+| `safe_db`        | Isolated DB for the test; see below. |
+
+### Using `safe_db` for tests that create resources
+
+Use the **`safe_db`** fixture in tests that create or change data. It records the current transaction id, runs your test, then rolls back everything created in that test so the DB stays clean.
+
+```python
+@pytest.mark.asyncio
+async def test_patient_subscription(aidbox_client, safe_db, sdk):
+    patient = await aidbox_client.resource("Patient", name=[{"family": "Test"}]).save()
+    await sdk.was_subscription_triggered("Patient")
+    # assertions...
+```
+
 
