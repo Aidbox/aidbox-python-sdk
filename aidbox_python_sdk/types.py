@@ -1,16 +1,25 @@
-from typing import Any, List
+from typing import Any
 
 from aiohttp import web
 from typing_extensions import TypedDict
 
+
 class Compliance(TypedDict, total=True):
     fhirUrl: str
     fhirCode: str
-    fhirResource: List[str]
+    fhirResource: list[str]
+
 
 SDKOperationRequest = TypedDict(
     "SDKOperationRequest",
-    {"app": web.Application, "params": dict, "route-params": dict, "headers": dict, "resource": Any},
+    {
+        "app": web.Application,
+        "params": dict,
+        "route-params": dict,
+        "form-params": dict,
+        "headers": dict,
+        "resource": Any,
+    },
 )
 
 

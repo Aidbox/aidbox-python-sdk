@@ -18,7 +18,7 @@ async def start_app(aiohttp_client):
     return app
 
 
-@pytest.fixture
+@pytest.fixture()
 async def client(aiohttp_client):
     """Instance of app's server and client"""
     return await start_app(aiohttp_client)
@@ -39,7 +39,7 @@ class AidboxSession(ClientSession):
         return await super()._request(method, url, *args, **kwargs)
 
 
-@pytest.fixture
+@pytest.fixture()
 async def aidbox(client):
     """HTTP client for making requests to Aidbox"""
     app = cast(web.Application, client.server.app)
@@ -52,7 +52,7 @@ async def aidbox(client):
     await session.close()
 
 
-@pytest.fixture
+@pytest.fixture()
 async def safe_db(aidbox, client, sdk):
     resp = await aidbox.post(
         "/$psql",
@@ -74,16 +74,16 @@ async def safe_db(aidbox, client, sdk):
     )
 
 
-@pytest.fixture
+@pytest.fixture()
 def sdk(client):
     return cast(web.Application, client.server.app)[ak.sdk]
 
 
-@pytest.fixture
+@pytest.fixture()
 def aidbox_client(client):
     return cast(web.Application, client.server.app)[ak.client]
 
 
-@pytest.fixture
+@pytest.fixture()
 def aidbox_db(client):
     return cast(web.Application, client.server.app)[ak.db]
