@@ -1,3 +1,4 @@
+import importlib
 import os
 from typing import cast
 
@@ -5,13 +6,36 @@ import pytest
 from aiohttp import BasicAuth, ClientSession, web
 from yarl import URL
 
-from main import create_app as _create_app
-
 from . import app_keys as ak
 
 
-async def start_app(aiohttp_client):
-    app = await aiohttp_client(_create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081})
+def pytest_addoption(parser):
+    parser.addini(
+        "aidbox_create_app",
+        "Dotted path to the create_app callable (module:name or module.name), e.g. main:create_app",
+        default="main:create_app",
+    )
+
+
+def _load_create_app(path: str):
+    """Import and return the create_app callable from the given dotted path."""
+    if ":" in path:
+        module_path, attr = path.split(":", 1)
+    else:
+        module_path, attr = path.rsplit(".", 1)
+    mod = importlib.import_module(module_path)
+    return getattr(mod, attr)
+
+
+@pytest.fixture(scope="session")
+def create_app(request):
+    """App factory; override in conftest or set pytest ini option aidbox_create_app."""
+    path = request.config.getini("aidbox_create_app")
+    return _load_create_app(path)
+
+
+async def start_app(aiohttp_client, create_app):
+    app = await aiohttp_client(create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081})
     sdk = cast(web.Application, app.server.app)[ak.sdk]
     sdk._test_start_txid = -1
 
@@ -19,9 +43,9 @@ async def start_app(aiohttp_client):
 
 
 @pytest.fixture()
-async def client(aiohttp_client):
+async def client(aiohttp_client, create_app):
     """Instance of app's server and client"""
-    return await start_app(aiohttp_client)
+    return await start_app(aiohttp_client, create_app)
 
 
 class AidboxSession(ClientSession):
