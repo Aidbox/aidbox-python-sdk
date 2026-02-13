@@ -1,12 +1,20 @@
+import asyncio
 import importlib
 import os
-from typing import cast
+import threading
+import warnings
+from collections.abc import Generator
+from types import SimpleNamespace
 
 import pytest
 from aiohttp import BasicAuth, ClientSession, web
 from yarl import URL
 
+from aidbox_python_sdk.aidboxpy import AsyncAidboxClient
+
 from . import app_keys as ak
+
+_TEST_SERVER_URL = "http://127.0.0.1:8081"
 
 
 def pytest_addoption(parser):
@@ -34,20 +42,92 @@ def create_app(request):
     return _load_create_app(path)
 
 
-async def start_app(aiohttp_client, create_app):
-    app = await aiohttp_client(create_app(), server_kwargs={"host": "0.0.0.0", "port": 8081})
-    sdk = cast(web.Application, app.server.app)[ak.sdk]
+@pytest.fixture(scope="session", autouse=True)
+def app(create_app) -> Generator[web.Application, None, None]:
+    """Start the aiohttp application server in a background thread.
+
+    Uses a dedicated event loop running continuously via loop.run_forever()
+    in a daemon thread. This is necessary (rather than an async fixture) because
+    the app needs the loop running at all times to handle external callbacks
+    from Aidbox (subscriptions, SDK heartbeats, etc.), not just during await
+    points in test code.
+
+    The server is guaranteed to be listening before any test runs (no sleep-based
+    waiting) since site.start() completes synchronously before yielding.
+    """
+
+    app = create_app()
+    loop = asyncio.new_event_loop()
+
+    runner = web.AppRunner(app)
+    loop.run_until_complete(runner.setup())
+    site = web.TCPSite(runner, host="0.0.0.0", port=8081)
+    loop.run_until_complete(site.start())
+
+    thread = threading.Thread(target=loop.run_forever, daemon=True)
+    thread.start()
+
+    yield app
+
+    loop.call_soon_threadsafe(loop.stop)
+    thread.join(timeout=5)
+    loop.run_until_complete(runner.cleanup())
+    loop.close()
+
+
+@pytest.fixture
+async def client(app):
+    server = SimpleNamespace(app=app)
+    session = ClientSession(base_url=URL(_TEST_SERVER_URL))
+    wrapper = SimpleNamespace(server=server)
+    wrapper.get = session.get
+    wrapper.post = session.post
+    wrapper.put = session.put
+    wrapper.patch = session.patch
+    wrapper.delete = session.delete
+    wrapper.request = session.request
+    wrapper._session = session
+    try:
+        yield wrapper
+    finally:
+        await session.close()
+
+
+@pytest.fixture
+async def safe_db(aidbox_client: AsyncAidboxClient, sdk):
+    results = await aidbox_client.execute(
+        "/$psql",
+        data={"query": "SELECT last_value from transaction_id_seq;"},
+    )
+    txid = results[0]["result"][0]["last_value"]
+    sdk._test_start_txid = int(txid)
+
+    yield txid
+
     sdk._test_start_txid = -1
-
-    return app
-
-
-@pytest.fixture()
-async def client(aiohttp_client, create_app):
-    """Instance of app's server and client"""
-    return await start_app(aiohttp_client, create_app)
+    await aidbox_client.execute(
+        "/$psql",
+        data={"query": f"select drop_before_all({txid});"},
+        params={"execute": "true"},
+    )
 
 
+@pytest.fixture
+def sdk(app):
+    return app[ak.sdk]
+
+
+@pytest.fixture
+def aidbox_client(app):
+    return app[ak.client]
+
+
+@pytest.fixture
+def aidbox_db(app):
+    return app[ak.db]
+
+
+# Deprecated
 class AidboxSession(ClientSession):
     def __init__(self, *args, base_url=None, **kwargs):
         base_url_resolved = base_url or os.environ.get("AIDBOX_BASE_URL")
@@ -63,10 +143,13 @@ class AidboxSession(ClientSession):
         return await super()._request(method, url, *args, **kwargs)
 
 
-@pytest.fixture()
-async def aidbox(client):
-    """HTTP client for making requests to Aidbox"""
-    app = cast(web.Application, client.server.app)
+@pytest.fixture
+async def aidbox(sdk, app):
+    warnings.warn(
+        "The 'aidbox' fixture is deprecated; use 'aidbox_client' for the Aidbox client instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     basic_auth = BasicAuth(
         login=app[ak.settings].APP_INIT_CLIENT_ID,
         password=app[ak.settings].APP_INIT_CLIENT_SECRET,
@@ -74,40 +157,3 @@ async def aidbox(client):
     session = AidboxSession(auth=basic_auth, base_url=app[ak.settings].APP_INIT_URL)
     yield session
     await session.close()
-
-
-@pytest.fixture()
-async def safe_db(aidbox, client, sdk):
-    resp = await aidbox.post(
-        "/$psql",
-        json={"query": "SELECT last_value from transaction_id_seq;"},
-        raise_for_status=True,
-    )
-    results = await resp.json()
-    txid = results[0]["result"][0]["last_value"]
-    sdk._test_start_txid = int(txid)
-
-    yield txid
-
-    sdk._test_start_txid = -1
-    await aidbox.post(
-        "/$psql",
-        json={"query": f"select drop_before_all({txid});"},
-        params={"execute": "true"},
-        raise_for_status=True,
-    )
-
-
-@pytest.fixture()
-def sdk(client):
-    return cast(web.Application, client.server.app)[ak.sdk]
-
-
-@pytest.fixture()
-def aidbox_client(client):
-    return cast(web.Application, client.server.app)[ak.client]
-
-
-@pytest.fixture()
-def aidbox_db(client):
-    return cast(web.Application, client.server.app)[ak.db]

@@ -16,7 +16,7 @@ _SubTriggered = dict[str, tuple[asyncio.AbstractEventLoop, asyncio.Future[bool],
 
 
 class SDK:
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         settings,
         *,
