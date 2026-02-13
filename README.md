@@ -233,6 +233,25 @@ def create_app():
 
 Use the **`safe_db`** fixture in tests that create or change data. It records the current transaction id, runs your test, then rolls back everything created in that test so the DB stays clean.
 
+**NOTE:** Without `safe_db`, all subscriptions are implicitly ignored for that test.
+
+Example:
+
+```python
+@pytest.mark.asyncio
+async def test_create_patient(aidbox_client, safe_db):
+    patient = await aidbox_client.resource("Patient", name=[{"family": "Test"}]).save()
+    patients = await aidbox_client.resources("Patient").fetch_all()
+    assert len(patients) >= 1
+    # after the test, safe_db rolls back and the patient is not persisted
+```
+
+### Subscription trigger helper (`was_subscription_triggered`)
+
+Use **`sdk.was_subscription_triggered(entity)`** (or `was_subscription_triggered_n_times(entity, n)`) only together with the **`safe_db`** fixture. Without `safe_db`, subscription handling is skipped for the test and the returned future is never completed, so the test will hang until the timeout.
+
+Example:
+
 ```python
 @pytest.mark.asyncio
 async def test_patient_subscription(aidbox_client, safe_db, sdk):
