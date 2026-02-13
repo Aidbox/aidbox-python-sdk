@@ -12,7 +12,7 @@ PGUSER=postgres
 PGPASSWORD=postgres
 
 BOX_PROJECT_GIT_TARGET__PATH=/aidbox-project
-AIDBOX_ZEN_PATHS=path:package-zip:/aidbox-project/zen-package.zip
+AIDBOX_ZEN_PATHS=path:package-dir:/aidbox-project
 AIDBOX_ZEN_ENTRYPOINT=main/box
 AIDBOX_DEV_MODE=true
 AIDBOX_ZEN_DEV_MODE=true
