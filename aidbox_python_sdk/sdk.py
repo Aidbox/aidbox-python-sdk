@@ -136,8 +136,8 @@ class SDK:
 
     def was_subscription_triggered_n_times(self, entity, counter):
         timeout = 10
-        future = asyncio.Future()
         target_loop = asyncio.get_running_loop()
+        future = target_loop.create_future()
         self._sub_triggered[entity] = (target_loop, future, counter)
         target_loop.call_later(
             timeout,

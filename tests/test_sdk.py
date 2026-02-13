@@ -52,33 +52,30 @@ async def test_live_health_check(client):
     assert json == {"status": "OK"}
 
 
-@pytest.mark.skip
-async def test_signup_reg_op(aidbox):
-    resp = await aidbox.post("signup/register/21.02.19/testvalue")
-    assert resp.status == 200
-    json = await resp.json()
+@pytest.mark.asyncio
+async def test_signup_reg_op(aidbox_client):
+    json = await aidbox_client.execute("signup/register/21.02.19/testvalue")
     assert json == {
         "success": "Ok",
         "request": {"date": "21.02.19", "test": "testvalue"},
     }
 
 
-@pytest.mark.skip
-async def test_appointment_sub(sdk, aidbox):
+@pytest.mark.asyncio
+async def test_appointment_sub(sdk, aidbox_client, safe_db):
     with mock.patch.object(main, "_appointment_sub") as appointment_sub:
         f = asyncio.Future()
         f.set_result("")
         appointment_sub.return_value = f
         was_appointment_sub_triggered = sdk.was_subscription_triggered("Appointment")
-        resp = await aidbox.post(
+        resource = aidbox_client.resource(
             "Appointment",
-            json={
+            **{
                 "status": "proposed",
                 "participant": [{"status": "accepted"}],
-                "resourceType": "Appointment",
             },
         )
-        assert resp.status == 201
+        await resource.save()
         await was_appointment_sub_triggered
         event = appointment_sub.call_args_list[0][0][0]
         logging.debug("event: %s", event)

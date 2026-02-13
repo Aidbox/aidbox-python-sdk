@@ -30,7 +30,7 @@ services:
       context: .
       args:
         PYTHON_VERSION: ${PYTHON:-3.11}
-    command: ["pipenv", "run", "pytest"]
+    command: ["pipenv", "run", "pytest", "--cov", "aidbox_python_sdk"]
     depends_on:
       aidbox:
         condition: service_healthy
