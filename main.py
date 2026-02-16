@@ -1,13 +1,12 @@
 import asyncio
 import logging
-import time
 from datetime import datetime
 
 import coloredlogs
-import sqlalchemy as sa
 from aiohttp import web
-from sqlalchemy.sql.expression import insert, select
+from sqlalchemy.sql.expression import select
 
+from aidbox_python_sdk.db import DBProxy
 from aidbox_python_sdk.handlers import routes
 from aidbox_python_sdk.main import create_app as _create_app
 from aidbox_python_sdk.sdk import SDK
@@ -129,37 +128,16 @@ async def daily_patient_report(operation, request):
     return web.json_response({"type": "report", "success": "Ok", "msg": "Response from APP"})
 
 
+async def get_app_ids(db: DBProxy):
+    app = db.App
+    return await db.alchemy(select(app.c.id))
+
+
 @routes.get("/db_tests")
 async def db_tests(request):
     db = request.app["db"]
-    app = db.App.__table__
-    app_res = {
-        "type": "app",
-        "resources": {
-            "User": {},
-        },
-    }
-    unique_id = f"abc{time.time()}"
-    test_statements = [
-        insert(app)
-        .values(id=unique_id, txid=123, status="created", resource=app_res)
-        .returning(app.c.id),
-        app.update()
-        .where(app.c.id == unique_id)
-        .values(resource=app.c.resource.op("||")({"additional": "property"})),
-        app.select().where(app.c.id == unique_id),
-        app.select().where(app.c.status == "recreated"),
-        select([app.c.resource["type"].label("app_type")]),
-        app.select().where(app.c.resource["resources"].has_key("User")),
-        select([app.c.id]).where(app.c.resource["type"].astext == "app"),
-        select([sa.func.count(app.c.id)]).where(app.c.resource.contains({"type": "app"})),
-        # TODO: got an error for this query.
-        # select('*').where(app.c.resource['resources'].has_all(array(['User', 'Client']))),
-    ]
-    for statement in test_statements:
-        result = await db.alchemy(statement)
-        logging.debug("Result:\n%s", result)
-    return web.json_response({})
+
+    return web.json_response(await get_app_ids(db))
 
 
 @sdk.operation(
@@ -169,6 +147,7 @@ async def db_tests(request):
         "fhirCode": "observation-custom-op",
         "fhirUrl": "http://test.com",
         "fhirResource": ["Observation"],
-    })
+    },
+)
 async def observation_custom_op(operation, request):
     return {"message": "Observation custom operation response"}

@@ -73,13 +73,13 @@ def create_table(table_name):
 
 
 class DBProxy:
-    _client = None
-    _settings = None
-    _table_cache = None
+    _client: ClientSession | None = None
+    _settings: Settings
+    _table_cache: dict
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, _table_cache: dict | None = None):
         self._settings = settings
-        self._table_cache = {}
+        self._table_cache = _table_cache or {}
 
     async def initialize(self):
         basic_auth = BasicAuth(
@@ -87,11 +87,19 @@ class DBProxy:
             password=self._settings.APP_INIT_CLIENT_SECRET,
         )
         self._client = ClientSession(auth=basic_auth)
-        # TODO: remove _init_table_cache
-        await self._init_table_cache()
+        if not self._table_cache:
+            await self._init_table_cache()
 
     async def deinitialize(self):
         await self._client.close()
+
+    def clone(self) -> "DBProxy":
+        """
+        Create a new DBProxy with the same settings and table cache
+        NOTE: it should be initialized after cloning
+        """
+
+        return DBProxy(self._settings, _table_cache=self._table_cache)
 
     async def raw_sql(self, sql_query, *, execute=False):
         """
@@ -146,7 +154,9 @@ class DBProxy:
 
         if not result:
             # Support legacy instalations with entity attribute data structure
-            query_url = f"{self._settings.APP_INIT_URL}/Entity?type=resource&_elements=id&_count=999"
+            query_url = (
+                f"{self._settings.APP_INIT_URL}/Entity?type=resource&_elements=id&_count=999"
+            )
             async with self._client.get(query_url) as resp:
                 json_resp = await resp.json()
                 result = [entry["resource"]["id"] for entry in json_resp.get("entry", [])]

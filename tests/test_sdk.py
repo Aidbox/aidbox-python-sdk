@@ -6,6 +6,7 @@ import pytest
 from fhirpathpy import evaluate
 
 import main
+from aidbox_python_sdk.db import DBProxy
 
 
 @pytest.mark.skip("Skipped because of regression in Aidbox 2510")
@@ -175,3 +176,16 @@ async def test_database_isolation_with_history_in_name__2(aidbox_client, safe_db
 
     resources = await aidbox_client.resources("FamilyMemberHistory").fetch_all()
     assert len(resources) == 2
+
+
+async def test_aidbox_db_fixture(client, aidbox_db: DBProxy, safe_db):
+    """
+    Test that aidbox_db fixture works with isolated DB Proxy from app's instance
+    """
+    response = await client.get("/db_tests")
+    assert response.status == 200
+    json = await response.json()
+    assert json == [{"id": "app-test"}]
+
+    app_ids = await main.get_app_ids(aidbox_db)
+    assert app_ids == [{"id": "app-test"}]

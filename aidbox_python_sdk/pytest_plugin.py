@@ -124,8 +124,13 @@ def aidbox_client(app):
 
 
 @pytest.fixture
-def aidbox_db(app):
-    return app[ak.db]
+async def aidbox_db(app):
+    # We clone it to init client session in the test thread
+    # because app is running in another thread with own loop
+    db = app[ak.db].clone()
+    await db.initialize()
+    yield db
+    await db.deinitialize()
 
 
 # Deprecated
