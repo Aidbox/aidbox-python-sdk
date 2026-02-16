@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Optional
 
 from aiohttp import BasicAuth, ClientSession
 from sqlalchemy import (
@@ -73,11 +74,11 @@ def create_table(table_name):
 
 
 class DBProxy:
-    _client: ClientSession | None = None
+    _client: Optional[ClientSession] = None
     _settings: Settings
     _table_cache: dict
 
-    def __init__(self, settings: Settings, _table_cache: dict | None = None):
+    def __init__(self, settings: Settings, _table_cache: Optional[dict] = None):
         self._settings = settings
         self._table_cache = _table_cache or {}
 
