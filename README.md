@@ -189,13 +189,6 @@ In your project’s **`conftest.py`** (e.g. `tests/conftest.py`), register the p
 pytest_plugins = ["aidbox_python_sdk.pytest_plugin"]
 ```
 
-Alternatively you can configure it in **`pyproject.toml`**:
-
-```toml
-[tool.pytest.ini_options]
-pytest_plugins = ["aidbox_python_sdk.pytest_plugin"]
-```
-
 ### Configuring the app factory
 
 The plugin needs your app factory (the callable that returns the `web.Application`). You can set it in pytest ini:
@@ -203,7 +196,6 @@ The plugin needs your app factory (the callable that returns the `web.Applicatio
 **`pyproject.toml`**
 ```toml
 [tool.pytest.ini_options]
-pytest_plugins = ["aidbox_python_sdk.pytest_plugin"]
 aidbox_create_app = "main:create_app"
 ```
 
