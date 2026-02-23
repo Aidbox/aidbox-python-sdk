@@ -247,8 +247,9 @@ Example:
 ```python
 @pytest.mark.asyncio
 async def test_patient_subscription(aidbox_client, safe_db, sdk):
+    was_patient_sub_triggered = sdk.was_subscription_triggered("Patient")
     patient = await aidbox_client.resource("Patient", name=[{"family": "Test"}]).save()
-    await sdk.was_subscription_triggered("Patient")
+    await was_patient_sub_triggered
     # assertions...
 ```
 
