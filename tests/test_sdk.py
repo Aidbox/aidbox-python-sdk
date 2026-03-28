@@ -4,6 +4,7 @@ from unittest import mock
 
 import pytest
 from fhirpathpy import evaluate
+from fhirpy.base.exceptions import OperationOutcome
 
 import main
 from aidbox_python_sdk.db import DBProxy
@@ -182,10 +183,28 @@ async def test_aidbox_db_fixture(client, aidbox_db: DBProxy, safe_db):
     """
     Test that aidbox_db fixture works with isolated DB Proxy from app's instance
     """
-    response = await client.get("/db_tests")
+    response = await client.get("/db-tests")
     assert response.status == 200
     json = await response.json()
     assert json == [{"id": "app-test"}]
 
     app_ids = await main.get_app_ids(aidbox_db)
     assert app_ids == [{"id": "app-test"}]
+
+
+async def test_operation_base_fhir_error_json_test_op(aidbox_client):
+    with pytest.raises(OperationOutcome) as exc:
+        await aidbox_client.execute("/$base-fhir-error-json-test")
+    assert exc.value.resource.get("issue")[0].get("diagnostics") == "Resource Patient/id not found"
+
+
+async def test_operation_base_fhir_error_text_test_op(aidbox_client):
+    with pytest.raises(OperationOutcome) as exc:
+        await aidbox_client.execute("/$base-fhir-error-text-test")
+    assert exc.value.resource.get("issue")[0].get("diagnostics") == "plain"
+
+
+async def test_operation_outcome_test_op(aidbox_client):
+    with pytest.raises(OperationOutcome) as exc:
+        await aidbox_client.execute("/$operation-outcome-test")
+    assert exc.value.resource.get("issue")[0].get("diagnostics") == "test reason"

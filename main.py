@@ -1,9 +1,11 @@
 import asyncio
+import json
 import logging
 from datetime import datetime
 
 import coloredlogs
 from aiohttp import web
+from fhirpy.base.exceptions import BaseFHIRError, OperationOutcome
 from sqlalchemy.sql.expression import select
 
 from aidbox_python_sdk.db import DBProxy
@@ -119,7 +121,7 @@ async def daily_patient_report(operation, request):
     GET /Patient/$weekly-report
     GET /Patient/$daily-report
     """
-    patients = request.app["client"].resources("Patient")
+    patients = request["app"]["client"].resources("Patient")
     async for p in patients:
         logging.debug(p.serialize())
     logging.debug("`daily_patient_report` operation handler")
@@ -133,7 +135,7 @@ async def get_app_ids(db: DBProxy):
     return await db.alchemy(select(app.c.id))
 
 
-@routes.get("/db_tests")
+@routes.get("/db-tests")
 async def db_tests(request):
     db = request.app["db"]
 
@@ -151,3 +153,42 @@ async def db_tests(request):
 )
 async def observation_custom_op(operation, request):
     return {"message": "Observation custom operation response"}
+
+
+@sdk.operation(
+    ["POST"],
+    ["$operation-outcome-test"],
+)
+async def operation_outcome_test_op(operation, request):
+    raise OperationOutcome(reason="test reason")
+
+
+@sdk.operation(
+    ["POST"],
+    ["$base-fhir-error-json-test"],
+)
+async def base_fhir_error_json_test_op(operation, request):
+    raise BaseFHIRError(
+        json.dumps(
+            {
+                "resourceType": "OperationOutcome",
+                "id": "not-found",
+                "text": {"status": "generated", "div": "Resource Patient/id not found"},
+                "issue": [
+                    {
+                        "severity": "fatal",
+                        "code": "not-found",
+                        "diagnostics": "Resource Patient/id not found",
+                    }
+                ],
+            }
+        )
+    )
+
+
+@sdk.operation(
+    ["POST"],
+    ["$base-fhir-error-text-test"],
+)
+async def base_fhir_error_text_test_op(operation, request):
+    raise BaseFHIRError("plain")
