@@ -49,7 +49,11 @@ async def operation(request: web.Request, data: dict[str, Any]):
     except OperationOutcome as exc:
         return web.json_response(exc.resource, status=422)
     except BaseFHIRError as exc:
-        return web.json_response(str(exc), status=422)
+        try:
+            payload = json.loads(str(exc))
+            return web.json_response(payload, status=422)
+        except (json.JSONDecodeError, TypeError):
+            return web.Response(text=str(exc), status=422, content_type='text/plain')
 
 
 TYPES = {
