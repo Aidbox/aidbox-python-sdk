@@ -3,7 +3,7 @@ import logging
 from typing import Any
 
 from aiohttp import web
-from fhirpy.base.exceptions import OperationOutcome
+from fhirpy.base.exceptions import OperationOutcome, BaseFHIRError
 
 from . import app_keys as ak
 
@@ -48,6 +48,8 @@ async def operation(request: web.Request, data: dict[str, Any]):
         return result
     except OperationOutcome as exc:
         return web.json_response(exc.resource, status=422)
+    except BaseFHIRError as exc:
+        return web.json_response(str(exc), status=422)
 
 
 TYPES = {
