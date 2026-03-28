@@ -1,3 +1,7 @@
+## 0.2.1
+
+- Handle BaseFHIRError exceptions from fhir-py in operation handlers
+
 ## 0.2.0
 
 - Make pytest_plugin confiugurable via `aidbox_create_app` pytest settings for create_app function
