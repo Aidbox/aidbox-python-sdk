@@ -1,10 +1,9 @@
 import asyncio
-import json
 import logging
 from typing import Any
 
 from aiohttp import web
-from fhirpy.base.exceptions import BaseFHIRError, OperationOutcome
+from fhirpy.base.exceptions import OperationOutcome
 
 from . import app_keys as ak
 
@@ -49,12 +48,6 @@ async def operation(request: web.Request, data: dict[str, Any]):
         return result
     except OperationOutcome as exc:
         return web.json_response(exc.resource, status=422)
-    except BaseFHIRError as exc:
-        try:
-            payload = json.loads(str(exc))
-            return web.json_response(payload, status=422)
-        except (json.JSONDecodeError, TypeError):
-            return web.Response(text=str(exc), status=422, content_type="text/plain")
 
 
 TYPES = {

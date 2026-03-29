@@ -192,18 +192,6 @@ async def test_aidbox_db_fixture(client, aidbox_db: DBProxy, safe_db):
     assert app_ids == [{"id": "app-test"}]
 
 
-async def test_operation_base_fhir_error_json_test_op(aidbox_client):
-    with pytest.raises(OperationOutcome) as exc:
-        await aidbox_client.execute("/$base-fhir-error-json-test")
-    assert exc.value.resource.get("issue")[0].get("diagnostics") == "Resource Patient/id not found"
-
-
-async def test_operation_base_fhir_error_text_test_op(aidbox_client):
-    with pytest.raises(OperationOutcome) as exc:
-        await aidbox_client.execute("/$base-fhir-error-text-test")
-    assert exc.value.resource.get("issue")[0].get("diagnostics") == "plain"
-
-
 async def test_operation_outcome_test_op(aidbox_client):
     with pytest.raises(OperationOutcome) as exc:
         await aidbox_client.execute("/$operation-outcome-test")
