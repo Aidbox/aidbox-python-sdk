@@ -1,11 +1,10 @@
 import asyncio
-import json
 import logging
 from datetime import datetime
 
 import coloredlogs
 from aiohttp import web
-from fhirpy.base.exceptions import BaseFHIRError, OperationOutcome
+from fhirpy.base.exceptions import OperationOutcome
 from sqlalchemy.sql.expression import select
 
 from aidbox_python_sdk.db import DBProxy
@@ -161,34 +160,3 @@ async def observation_custom_op(operation, request):
 )
 async def operation_outcome_test_op(operation, request):
     raise OperationOutcome(reason="test reason")
-
-
-@sdk.operation(
-    ["POST"],
-    ["$base-fhir-error-json-test"],
-)
-async def base_fhir_error_json_test_op(operation, request):
-    raise BaseFHIRError(
-        json.dumps(
-            {
-                "resourceType": "OperationOutcome",
-                "id": "not-found",
-                "text": {"status": "generated", "div": "Resource Patient/id not found"},
-                "issue": [
-                    {
-                        "severity": "fatal",
-                        "code": "not-found",
-                        "diagnostics": "Resource Patient/id not found",
-                    }
-                ],
-            }
-        )
-    )
-
-
-@sdk.operation(
-    ["POST"],
-    ["$base-fhir-error-text-test"],
-)
-async def base_fhir_error_text_test_op(operation, request):
-    raise BaseFHIRError("plain")
