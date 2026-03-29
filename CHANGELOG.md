@@ -1,6 +1,6 @@
 ## 0.2.2
 
-- Revert BaseFHIRError exceptions from fhir-py in operation handlers b
+- Revert BaseFHIRError exceptions from fhir-py in operation handlers
 
 
 ## 0.2.1 (yanked)
