@@ -101,7 +101,7 @@ async def safe_db(aidbox_client: AsyncAidboxClient, sdk):
         "/$psql",
         data={"query": "SELECT last_value from transaction_id_seq;"},
     )
-    txid = parse_psql_response(results)[0]["last_value"]
+    txid = parse_psql_response(results)[0][0]["last_value"]
     sdk._test_start_txid = int(txid)
 
     yield txid

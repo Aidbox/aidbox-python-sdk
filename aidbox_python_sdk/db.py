@@ -25,9 +25,11 @@ from .exceptions import AidboxDBException
 
 def parse_psql_response(response):
     """
-    Extracts result rows from a $psql response, supporting both formats:
+    Normalizes a $psql response into a list of result sets (one per statement).
+    Supports both formats:
     - pre-2604: [{status, result: [row, ...], ...}]
     - 2604+:    {status, result: [{type, data: [row, ...]}, ...], ...}
+    Raises AidboxDBException on error status.
     """
     entry = response[0] if isinstance(response, list) else response
 
@@ -35,17 +37,19 @@ def parse_psql_response(response):
         raise AidboxDBException(entry)
 
     result = entry.get("result")
+
     if not isinstance(result, list):
-        return result  # None or True (old format execute=true)
+        return [result]  # None or True (old format execute=true)
 
     if not result:
-        return result
+        return [result]
 
     # New format (2604+): result items carry {type, data}
     if isinstance(result[0], dict) and "data" in result[0]:
-        return result[0]["data"]
+        return [rset["data"] for rset in result]
 
-    return result
+    # Old format: single flat list of rows
+    return [result]
 
 
 logger = logging.getLogger("aidbox_sdk.db")
@@ -150,7 +154,17 @@ class DBProxy:
         ) as resp:
             logger.debug("$psql answer %s", await resp.text())
             results = await resp.json()
-            return parse_psql_response(results)
+            result = parse_psql_response(results)
+            if execute:
+                return True
+            if len(result) > 1:
+                raise AidboxDBException(
+                    {
+                        "status": "error",
+                        "error": "Multiple result sets returned; use execute=True for multi-statement queries",
+                    }
+                )
+            return result[0]
 
     def compile_statement(self, statement):
         return str(
