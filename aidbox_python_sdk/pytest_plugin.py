@@ -13,6 +13,7 @@ from yarl import URL
 from aidbox_python_sdk.aidboxpy import AsyncAidboxClient
 
 from . import app_keys as ak
+from .db import parse_psql_response
 
 _TEST_SERVER_URL = "http://127.0.0.1:8081"
 
@@ -100,7 +101,7 @@ async def safe_db(aidbox_client: AsyncAidboxClient, sdk):
         "/$psql",
         data={"query": "SELECT last_value from transaction_id_seq;"},
     )
-    txid = results[0]["result"][0]["last_value"]
+    txid = parse_psql_response(results)[0]["last_value"]
     sdk._test_start_txid = int(txid)
 
     yield txid

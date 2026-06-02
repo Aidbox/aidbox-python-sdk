@@ -22,6 +22,32 @@ from aidbox_python_sdk.settings import Settings
 
 from .exceptions import AidboxDBException
 
+
+def parse_psql_response(response):
+    """
+    Extracts result rows from a $psql response, supporting both formats:
+    - pre-2604: [{status, result: [row, ...], ...}]
+    - 2604+:    {status, result: [{type, data: [row, ...]}, ...], ...}
+    """
+    entry = response[0] if isinstance(response, list) else response
+
+    if entry.get("status") == "error":
+        raise AidboxDBException(entry)
+
+    result = entry.get("result")
+    if not isinstance(result, list):
+        return result  # None or True (old format execute=true)
+
+    if not result:
+        return result
+
+    # New format (2604+): result items carry {type, data}
+    if isinstance(result[0], dict) and "data" in result[0]:
+        return result[0]["data"]
+
+    return result
+
+
 logger = logging.getLogger("aidbox_sdk.db")
 table_metadata = MetaData()
 
@@ -124,10 +150,7 @@ class DBProxy:
         ) as resp:
             logger.debug("$psql answer %s", await resp.text())
             results = await resp.json()
-
-            if results[0]["status"] == "error":
-                raise AidboxDBException(results[0])
-            return results[0].get("result", None)
+            return parse_psql_response(results)
 
     def compile_statement(self, statement):
         return str(
