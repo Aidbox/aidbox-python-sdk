@@ -70,11 +70,13 @@ async def test_appointment_sub(sdk, aidbox_client, safe_db):
         f.set_result("")
         appointment_sub.return_value = f
         was_appointment_sub_triggered = sdk.was_subscription_triggered("Appointment")
+        patient = aidbox_client.resource("Patient")
+        await patient.save()
         resource = aidbox_client.resource(
             "Appointment",
             **{
                 "status": "proposed",
-                "participant": [{"status": "accepted"}],
+                "participant": [{"status": "accepted", "actor": patient}],
             },
         )
         await resource.save()
@@ -84,7 +86,9 @@ async def test_appointment_sub(sdk, aidbox_client, safe_db):
         expected = {
             "resource": {
                 "status": "proposed",
-                "participant": [{"status": "accepted"}],
+                "participant": [
+                    {"status": "accepted", "actor": {"id": patient.id, "resourceType": "Patient"}}
+                ],
                 "resourceType": "Appointment",
             },
             "action": "create",
