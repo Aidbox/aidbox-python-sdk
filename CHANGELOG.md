@@ -1,3 +1,8 @@
+## 0.3.0
+
+- Drop Python 3.9 and 3.10, both end of life
+
+
 ## 0.2.2
 
 - Revert BaseFHIRError exceptions from fhir-py in operation handlers

@@ -1,10 +1,10 @@
 [![build status](https://github.com/Aidbox/aidbox-python-sdk/actions/workflows/build.yaml/badge.svg)](https://github.com/Aidbox/aidbox-python-sdk/actions/workflows/build.yaml)
 [![pypi](https://img.shields.io/pypi/v/aidbox-python-sdk.svg)](https://pypi.org/project/aidbox-python-sdk/)
-[![Supported Python version](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/release/python-390/)
+[![Supported Python version](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/release/python-3110/)
 
 # aidbox-python-sdk
 
-1. Create a python 3.9+ environment `pyenv `
+1. Create a python 3.11+ environment `pyenv `
 2. Set env variables and activate virtual environment `source activate_settings.sh`
 2. Install the required packages with `pipenv install --dev`
 3. Make sure the app's settings are configured correctly (see `activate_settings.sh` and `aidbox_python_sdk/settings.py`). You can also
