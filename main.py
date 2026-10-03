@@ -160,3 +160,16 @@ async def observation_custom_op(operation, request):
 )
 async def operation_outcome_test_op(operation, request):
     raise OperationOutcome(reason="test reason")
+
+
+@sdk.operation(
+    ["POST"],
+    ["$dispatch-test"],
+)
+async def dispatch_test_op(operation, request):
+    return web.json_response({"status": "ok"})
+
+
+@sdk.subscription("Location")
+async def dispatch_test_sub(event, request):
+    pass

@@ -1,4 +1,5 @@
 import asyncio
+import base64
 import logging
 from unittest import mock
 
@@ -7,6 +8,7 @@ from fhirpathpy import evaluate
 from fhirpy.base.exceptions import OperationOutcome
 
 import main
+from aidbox_python_sdk import app_keys as ak
 from aidbox_python_sdk.db import DBProxy
 
 
@@ -200,3 +202,71 @@ async def test_operation_outcome_test_op(aidbox_client):
     with pytest.raises(OperationOutcome) as exc:
         await aidbox_client.execute("/$operation-outcome-test")
     assert exc.value.resource.get("issue")[0].get("diagnostics") == "test reason"
+
+
+DISPATCH_TEST_OP = {
+    "type": "operation",
+    "operation": {"id": "POST.main.dispatch_test_op.ddispatch-test"},
+    "request": {},
+}
+DISPATCH_TEST_EVENT = {"type": "subscription", "handler": "dispatch_test_sub", "event": {}}
+ANOTHER_APP_AUTHORIZATION = f"Basic {base64.b64encode(b'app-test:another-secret').decode()}"
+
+
+@pytest.fixture
+def aidbox_authorization(app):
+    settings = app[ak.settings]
+    credentials = f"{settings.APP_ID}:{settings.APP_SECRET}".encode()
+    return f"Basic {base64.b64encode(credentials).decode()}"
+
+
+@pytest.mark.asyncio
+async def test_dispatch_refuses_an_operation_without_credentials(client):
+    resp = await client.post("/aidbox", json=DISPATCH_TEST_OP)
+
+    assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_dispatch_refuses_an_operation_with_another_app_secret(client):
+    resp = await client.post(
+        "/aidbox", json=DISPATCH_TEST_OP, headers={"Authorization": ANOTHER_APP_AUTHORIZATION}
+    )
+
+    assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_dispatch_invokes_an_operation_for_aidbox(client, aidbox_authorization):
+    resp = await client.post(
+        "/aidbox", json=DISPATCH_TEST_OP, headers={"Authorization": aidbox_authorization}
+    )
+
+    assert resp.status == 200
+    # The fallback branch answers 200 too, so only the operation's own body proves it ran.
+    assert await resp.json() == {"status": "ok"}
+
+
+@pytest.mark.asyncio
+async def test_dispatch_refuses_a_subscription_without_credentials(client):
+    resp = await client.post("/aidbox", json=DISPATCH_TEST_EVENT)
+
+    assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_dispatch_refuses_a_subscription_with_another_app_secret(client):
+    resp = await client.post(
+        "/aidbox", json=DISPATCH_TEST_EVENT, headers={"Authorization": ANOTHER_APP_AUTHORIZATION}
+    )
+
+    assert resp.status == 401
+
+
+@pytest.mark.asyncio
+async def test_dispatch_triggers_a_subscription_for_aidbox(client, aidbox_authorization):
+    resp = await client.post(
+        "/aidbox", json=DISPATCH_TEST_EVENT, headers={"Authorization": aidbox_authorization}
+    )
+
+    assert resp.status == 200

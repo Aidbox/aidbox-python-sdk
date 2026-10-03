@@ -1,5 +1,7 @@
 import asyncio
+import base64
 import logging
+import secrets
 from typing import Any
 
 from aiohttp import web
@@ -9,6 +11,13 @@ from . import app_keys as ak
 
 logger = logging.getLogger("aidbox_sdk")
 routes = web.RouteTableDef()
+
+
+def is_from_aidbox(request: web.Request) -> bool:
+    """Aidbox calls an http-rpc endpoint with the secret the app registered it under."""
+    settings = request.app[ak.settings]
+    expected = b"Basic " + base64.b64encode(f"{settings.APP_ID}:{settings.APP_SECRET}".encode())
+    return secrets.compare_digest(request.headers.get("Authorization", "").encode(), expected)
 
 
 async def subscription(request: web.Request, data: dict):
@@ -59,6 +68,10 @@ TYPES = {
 @routes.post("/aidbox")
 async def dispatch(request):
     logger.debug("Dispatch new request %s %s", request.method, request.url)
+    if not is_from_aidbox(request):
+        logger.error("Dispatch request without the app's credentials")
+        raise web.HTTPUnauthorized()
+
     data = await request.json()
     if "type" in data and data["type"] in TYPES:
         logger.debug("Dispatch to `%s` handler", data["type"])
