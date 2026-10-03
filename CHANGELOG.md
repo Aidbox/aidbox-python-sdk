@@ -1,5 +1,6 @@
 ## 0.3.0
 
+- Answer `401` to a `POST /aidbox` that does not carry the app's `APP_ID:APP_SECRET` credentials
 - Drop Python 3.9 and 3.10, both end of life
 
 
