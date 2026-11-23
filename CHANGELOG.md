@@ -1,3 +1,8 @@
+## 0.3.1
+
+- Bump certifi to 2026.10.23 to fix GHSA-6q48-6c7w-9gw2
+
+
 ## 0.3.0
 
 - Answer `401` to a `POST /aidbox` that does not carry the app's `APP_ID:APP_SECRET` credentials
